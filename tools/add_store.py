@@ -9,8 +9,21 @@ p = argparse.ArgumentParser(); p.add_argument("name"); p.add_argument("address")
 p.add_argument("--menu", default=""); p.add_argument("--phone", default=None); p.add_argument("--naver", default=None)
 p.add_argument("--hours", nargs="+", required=True); p.add_argument("--closed", nargs="*", type=int, default=[])
 p.add_argument("--discount", type=int, default=3000)
+p.add_argument("--latlng", default=None, help="위도,경도 (예: 37.4845,126.9296). 없으면 주소로 자동 지오코딩 시도")
 a = p.parse_args()
-s = rest("stores", "POST", {"name": a.name, "address": a.address, "menu_note": a.menu, "phone": a.phone, "naver_url": a.naver, "discount_krw": a.discount}, prefer="return=representation")[0]
+lat = lng = None
+if a.latlng:
+    lat, lng = map(float, a.latlng.split(","))
+else:
+    import urllib.parse, urllib.request, json
+    try:
+        q = urllib.parse.urlencode({"q": a.address, "format": "json", "limit": 1, "countrycodes": "kr"})
+        req = urllib.request.Request(f"https://nominatim.openstreetmap.org/search?{q}", headers={"User-Agent": "rabap-admin/1.0"})
+        r = json.load(urllib.request.urlopen(req, timeout=10))
+        if r: lat, lng = float(r[0]["lat"]), float(r[0]["lon"]); print(f"지오코딩: {lat},{lng} ({r[0]['display_name'][:60]})")
+        else: print("⚠ 지오코딩 실패 — --latlng 로 직접 넣으세요 (네이버지도에서 우클릭→좌표)")
+    except Exception as e: print("⚠ 지오코딩 오류:", e)
+s = rest("stores", "POST", {"name": a.name, "address": a.address, "menu_note": a.menu, "phone": a.phone, "naver_url": a.naver, "discount_krw": a.discount, "lat": lat, "lng": lng}, prefer="return=representation")[0]
 days = [d for d in range(7) if d not in a.closed]
 for h in a.hours:
     o, c = h.split("-"); rest("rpc/set_hours", "POST", {"p_store": s["id"], "p_open": o, "p_close": c, "p_days": days})
