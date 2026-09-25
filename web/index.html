@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#FF6B35">
+<title>라밥</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<style>
+:root{--brand:#FF6B35;--brand-dark:#E5561F;--ink:#1A1A1A;--sub:#6B6B6B;--line:#EDEDED;--bg:#F7F7F7;--card:#FFF;--ok:#1FA65A;--bad:#D93025;--radius:14px}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,"Pretendard","Noto Sans KR",system-ui,sans-serif;font-size:16px;line-height:1.45}
+body{padding-bottom:calc(72px + env(safe-area-inset-bottom))}
+#app{max-width:520px;margin:0 auto;min-height:100vh}
+.page{padding:20px 16px}
+h1{font-size:22px;margin:0 0 4px;font-weight:800}
+h2{font-size:18px;margin:24px 0 10px;font-weight:700}
+p{margin:0 0 12px}
+.sub{color:var(--sub);font-size:14px}
+.card{background:var(--card);border-radius:var(--radius);padding:16px;box-shadow:0 1px 3px rgba(0,0,0,.06);margin-bottom:12px}
+.btn{display:block;width:100%;border:0;border-radius:12px;padding:16px;font-size:17px;font-weight:700;background:var(--brand);color:#fff;text-align:center;text-decoration:none;cursor:pointer}
+.btn:active{background:var(--brand-dark)}
+.btn.ghost{background:#fff;color:var(--ink);border:1.5px solid var(--line)}
+.btn.sm{padding:11px;font-size:15px;border-radius:10px}
+.btn:disabled{background:#CFCFCF;color:#fff}
+input{width:100%;border:1.5px solid var(--line);border-radius:12px;padding:15px;font-size:18px;background:#fff;outline:0}
+input:focus{border-color:var(--brand)}
+label{display:block;font-size:13px;color:var(--sub);margin:14px 0 6px;font-weight:600}
+.err{color:var(--bad);font-size:14px;margin-top:10px;font-weight:600}
+.badge{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:6px 12px;font-size:13px;font-weight:700}
+.badge.on{background:#E6F6EC;color:var(--ok)}
+.badge.off{background:#F1F1F1;color:var(--sub)}
+.badge.done{background:#FFF0E8;color:var(--brand-dark)}
+.hero{background:linear-gradient(135deg,var(--brand),#FF8F5E);color:#fff;border-radius:18px;padding:22px 18px;margin-bottom:16px}
+.hero .big{font-size:26px;font-weight:800;margin:6px 0 2px}
+.hero .sub{color:rgba(255,255,255,.85)}
+.store{display:flex;gap:12px;align-items:flex-start}
+.store .name{font-weight:700;font-size:16px}
+.store .meta{font-size:13px;color:var(--sub);margin-top:2px}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:6px;background:#C4C4C4}
+.dot.on{background:var(--ok)}
+.nav{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--line);display:flex;justify-content:space-around;padding:8px 0 calc(8px + env(safe-area-inset-bottom));max-width:520px;margin:0 auto}
+.nav a{flex:1;text-align:center;font-size:11px;color:var(--sub);text-decoration:none;font-weight:600}
+.nav a .ic{font-size:22px;display:block;line-height:1.1}
+.nav a.on{color:var(--brand)}
+.nav a.qr .ic{background:var(--brand);color:#fff;border-radius:50%;width:48px;height:48px;line-height:48px;margin:-22px auto 2px;box-shadow:0 4px 12px rgba(255,107,53,.4)}
+#reader{width:100%;border-radius:var(--radius);overflow:hidden;background:#000;min-height:280px}
+.result{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;text-align:center;z-index:50;color:#fff}
+.result.ok{background:var(--ok)}
+.result.bad{background:var(--bad)}
+.result .amt{font-size:44px;font-weight:900;margin:8px 0}
+.result .st{font-size:22px;font-weight:700}
+.result .tm{font-size:15px;opacity:.9;margin-top:6px}
+.result .cnt{margin-top:28px;font-size:14px;opacity:.85}
+.result .btn{margin-top:20px;background:#fff;color:var(--ink);max-width:280px}
+.row{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--line)}
+.row:last-child{border-bottom:0}
+.code{font-family:ui-monospace,Menlo,monospace;font-size:26px;font-weight:800;letter-spacing:2px;text-align:center;padding:14px;background:#FFF6F2;border-radius:12px;color:var(--brand-dark)}
+.strike{text-decoration:line-through;opacity:.7;margin-right:6px}
+.center{text-align:center}
+.mt{margin-top:16px}
+.hidden{display:none}
+</style>
+</head>
+<body>
+<div id="app"><div class="page center sub">불러오는 중…</div></div>
+<script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script>
+const API = "https://zthrcavaccgtvsyffpeh.supabase.co/functions/v1/api";
+const $ = (s) => document.querySelector(s);
+const app = $("#app");
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const won = (n) => Number(n).toLocaleString("ko-KR") + "원";
+const store = { get token(){ return localStorage.getItem("rabap_token"); }, set token(v){ v ? localStorage.setItem("rabap_token", v) : localStorage.removeItem("rabap_token"); } };
+function deviceId(){ let d = localStorage.getItem("rabap_dev"); if(!d){ d = crypto.randomUUID(); localStorage.setItem("rabap_dev", d); } return d; }
+async function api(action, body={}){
+  const r = await fetch(API, { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ action, token: store.token, ...body }) });
+  const j = await r.json().catch(() => ({ ok:false, reason:"서버 응답 오류" }));
+  if (r.status === 401) { store.token = null; go("/join"); }
+  return j;
+}
+function go(path){ location.hash = "#" + path; }
+function route(){ const h = location.hash.replace(/^#/, "") || "/"; const [path, q] = h.split("?"); return { path, q: new URLSearchParams(q || "") }; }
+let scanner = null;
+async function stopScanner(){ if (scanner) { try { await scanner.stop(); scanner.clear(); } catch {} scanner = null; } }
+
+// ---------- 화면 ----------
+function nav(active){
+  const it = (p, ic, t, cls="") => `<a href="#${p}" class="${cls} ${active===p?"on":""}"><span class="ic">${ic}</span>${t}</a>`;
+  return `<nav class="nav">${it("/","🏠","홈")}${it("/scan","▣","QR 할인","qr")}${it("/invite","✉","초대")}${it("/history","☰","내역")}</nav>`;
+}
+
+function pageJoin(q){
+  const code = q.get("code") || "";
+  app.innerHTML = `<div class="page">
+    <div class="hero"><div class="sub">관악구 라이더 전용</div><div class="big">라밥</div><div class="sub">비피크 시간, 제휴 식당에서 매끼 3,000원 할인</div></div>
+    <div class="card">
+      <label>초대 코드</label><input id="code" value="${esc(code)}" placeholder="예: A1B2C3D4" autocapitalize="characters" autocomplete="off">
+      <label>휴대폰 번호</label><input id="phone" type="tel" placeholder="010-0000-0000" inputmode="numeric">
+      <div id="err" class="err"></div>
+      <button class="btn mt" id="joinBtn">시작하기 · 첫 달 무료</button>
+      <p class="sub center mt" style="font-size:12px">정가 월 3,000원. 첫 달 무료 후 월 1,000원. 시작 시 <a href="privacy.html" style="color:var(--sub)">개인정보처리방침</a>에 동의한 것으로 봅니다.</p>
+    </div>
+    <div class="card sub" style="font-size:14px">
+      <b>이용 안내</b><br>· 할인 시간: 14:00~17:00, 20:00~24:00<br>· 하루 1회, 제휴 식당 카운터의 QR을 찍으면 끝<br>· 계산할 때 할인 화면을 사장님께 보여주세요
+    </div>
+  </div>`;
+  $("#joinBtn").onclick = async () => {
+    const b = $("#joinBtn"); b.disabled = true; $("#err").textContent = "";
+    const r = await api("join", { code: $("#code").value, phone: $("#phone").value, device_id: deviceId() });
+    if (r.ok) { store.token = r.token; go("/"); } else { $("#err").textContent = r.reason; b.disabled = false; }
+  };
+}
+
+async function pageHome(){
+  app.innerHTML = `<div class="page center sub">불러오는 중…</div>${nav("/")}`;
+  const [me, st] = await Promise.all([api("me"), api("stores")]);
+  if (!me.ok) return;
+  let badge, title, sub;
+  if (me.used_today) { badge = `<span class="badge done">오늘 사용 완료</span>`; title = "오늘 할인 사용했어요"; sub = `${esc(me.used_today.store)} · 내일 또 만나요`; }
+  else if (!me.membership?.live) { badge = `<span class="badge off">멤버십 만료</span>`; title = "멤버십이 만료됐어요"; sub = "라밥 카톡채널로 문의해 주세요"; }
+  else if (me.in_window) { badge = `<span class="badge on">● 지금 할인 가능</span>`; title = "지금 3,000원 할인 시간"; sub = `현재 ${me.now} · 식당 QR을 찍으세요`; }
+  else { badge = `<span class="badge off">할인 시간 아님</span>`; title = me.next_window ? `${me.next_window}부터 할인 가능` : "오늘 할인 시간 끝"; sub = me.next_window ? `현재 ${me.now}` : "내일 14:00부터"; }
+  const canScan = me.membership?.live && me.in_window && !me.used_today;
+  const cards = (st.stores || []).map(s => `<a class="card store" href="#/store/${s.id}" style="text-decoration:none;color:inherit">
+      <div style="flex:1"><div class="name"><span class="dot ${s.open_now?"on":""}"></span>${esc(s.name)}</div>
+      <div class="meta">${esc(s.menu_note || "")}</div>
+      <div class="meta">${s.today_hours.length ? "오늘 " + s.today_hours.map(h=>h.join("~")).join(", ") : "오늘 휴무"}${s.open_now?"":" · 영업 전/후"}</div></div>
+      <div style="font-weight:800;color:var(--brand)">-${won(s.discount_krw)}</div></a>`).join("");
+  app.innerHTML = `<div class="page">
+    <div class="hero">${badge}<div class="big">${title}</div><div class="sub">${sub}</div></div>
+    ${canScan ? `<a class="btn" href="#/scan">QR 찍고 3,000원 할인</a>` : ""}
+    <h2>제휴 식당 <span class="sub" style="font-weight:500;font-size:14px">${(st.stores||[]).length}곳</span></h2>
+    ${cards || `<div class="card sub center">제휴 식당을 준비 중이에요</div>`}
+  </div>${nav("/")}`;
+  window._stores = st.stores || [];
+}
+
+async function pageStore(id){
+  if (!window._stores) { const st = await api("stores"); window._stores = st.stores || []; }
+  const s = window._stores.find(x => x.id === id);
+  if (!s) return go("/");
+  const naver = s.naver_url || `https://map.naver.com/p/search/${encodeURIComponent(s.name + " " + s.address)}`;
+  app.innerHTML = `<div class="page">
+    <a href="#/" class="sub" style="text-decoration:none">‹ 홈</a>
+    <h1 class="mt">${esc(s.name)}</h1>
+    <p class="sub">${esc(s.address)}</p>
+    <div class="card">
+      <div class="row"><span class="sub">할인</span><b style="color:var(--brand)">${won(s.discount_krw)} 할인</b></div>
+      <div class="row"><span class="sub">대표 메뉴</span><span>${esc(s.menu_note || "-")}</span></div>
+      <div class="row"><span class="sub">오늘 영업</span><span>${s.today_hours.length ? s.today_hours.map(h=>h.join("~")).join(", ") : "휴무"}</span></div>
+      <div class="row"><span class="sub">지금</span><span>${s.open_now ? "🟢 영업 중" : "⚪ 영업시간 아님"}</span></div>
+    </div>
+    <a class="btn ghost" href="${naver}" target="_blank">네이버 지도에서 길찾기</a>
+    ${s.phone ? `<a class="btn ghost mt" href="tel:${esc(s.phone)}">전화하기</a>` : ""}
+    <a class="btn mt" href="#/scan">QR 찍고 할인받기</a>
+    <p class="sub center mt" style="font-size:13px">할인은 14~17시, 20~24시 · 하루 1회</p>
+  </div>${nav("/")}`;
+}
+
+function showResult(r){
+  const el = document.createElement("div");
+  if (r.ok) {
+    el.className = "result ok";
+    el.innerHTML = `<div class="st">${esc(r.store)}</div><div class="amt">-${won(r.discount_krw)}</div><div class="st">할인 적용됐어요</div>
+      <div class="tm">${r.now} · 계산할 때 이 화면을 보여주세요</div><div class="cnt">이 화면은 <span id="c">15</span>초 후 닫힙니다</div><button class="btn">확인</button>`;
+  } else {
+    el.className = "result bad";
+    el.innerHTML = `<div class="st">할인을 적용할 수 없어요</div><div class="tm" style="font-size:18px;margin-top:12px">${esc(r.reason)}</div><button class="btn">확인</button>`;
+  }
+  document.body.appendChild(el);
+  const close = () => { el.remove(); clearInterval(t); go("/"); };
+  el.querySelector(".btn").onclick = close;
+  let n = 15; const t = r.ok ? setInterval(() => { n--; const c = el.querySelector("#c"); if (c) c.textContent = n; if (n <= 0) close(); }, 1000) : null;
+}
+
+async function pageScan(){
+  app.innerHTML = `<div class="page">
+    <a href="#/" class="sub" style="text-decoration:none">‹ 홈</a>
+    <h1 class="mt">식당 QR을 찍으세요</h1>
+    <p class="sub">카운터에 붙은 라밥 QR 스티커</p>
+    <div id="reader"></div>
+    <div id="err" class="err"></div>
+    <p class="sub center mt" style="font-size:13px">카메라가 안 열리면 브라우저 설정에서 카메라 권한을 허용해 주세요</p>
+  </div>${nav("/scan")}`;
+  let busy = false;
+  try {
+    scanner = new Html5Qrcode("reader");
+    await scanner.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 240, height: 240 } }, async (text) => {
+      if (busy) return; busy = true;
+      await stopScanner();
+      const r = await api("redeem", { secret: text });
+      showResult(r);
+    });
+  } catch (e) { $("#err").textContent = "카메라를 열 수 없어요: " + (e?.message || e); }
+}
+
+async function pageInvite(){
+  app.innerHTML = `<div class="page center sub">불러오는 중…</div>${nav("/invite")}`;
+  const me = await api("me"); if (!me.ok) return;
+  const inv = me.invite || { code: "-", used_count: 0, max_uses: 0 };
+  const link = `${location.origin}${location.pathname}#/join?code=${inv.code}`;
+  const msg = `라밥 초대장 🍚\n관악 라이더끼리 제휴 식당에서 매끼 3,000원 할인받는 앱이에요. 첫 달 무료.\n초대 코드: ${inv.code}\n${link}`;
+  app.innerHTML = `<div class="page">
+    <h1>동료 라이더 초대</h1>
+    <p class="sub">초대한 사람만 가입할 수 있어요. 내 코드로 ${inv.max_uses}명까지.</p>
+    <div class="card"><div class="code">${esc(inv.code)}</div>
+      <p class="sub center mt">${inv.used_count} / ${inv.max_uses}명 가입</p>
+      <button class="btn" id="share">초대 링크 공유하기</button>
+      <button class="btn ghost sm mt" id="copy">링크 복사</button>
+    </div>
+  </div>${nav("/invite")}`;
+  $("#share").onclick = async () => { if (navigator.share) { try { await navigator.share({ text: msg }); } catch {} } else { await navigator.clipboard.writeText(msg); alert("초대 문구를 복사했어요. 카톡에 붙여넣으세요."); } };
+  $("#copy").onclick = async () => { await navigator.clipboard.writeText(link); alert("링크를 복사했어요"); };
+}
+
+async function pageHistory(){
+  app.innerHTML = `<div class="page center sub">불러오는 중…</div>${nav("/history")}`;
+  const [me, h] = await Promise.all([api("me"), api("history")]);
+  if (!me.ok) return;
+  const total = (h.items || []).reduce((a, x) => a + x.krw, 0);
+  const rows = (h.items || []).map(x => { const d = new Date(x.at); return `<div class="row"><div><b>${esc(x.store)}</b><div class="sub" style="font-size:13px">${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}</div></div><span style="color:var(--brand);font-weight:700">-${won(x.krw)}</span></div>`; }).join("");
+  const m = me.membership; const end = m ? new Date(m.period_end) : null;
+  app.innerHTML = `<div class="page">
+    <h1>이용 내역</h1>
+    <div class="hero"><div class="sub">지금까지 아낀 돈</div><div class="big">${won(total)}</div><div class="sub">${me.total_count}회 사용</div></div>
+    <div class="card">${rows || `<div class="sub center">아직 사용 내역이 없어요</div>`}</div>
+    <h2>멤버십</h2>
+    <div class="card">
+      <div class="row"><span class="sub">번호</span><span>${esc(me.phone_masked)}</span></div>
+      <div class="row"><span class="sub">상태</span><span>${m?.live ? "이용 중 (첫 달 무료)" : "만료"}</span></div>
+      <div class="row"><span class="sub">무료 기간</span><span>${end ? `${end.getMonth()+1}/${end.getDate()}까지` : "-"}</span></div>
+      <div class="row"><span class="sub">이후 요금</span><span><span class="strike">월 3,000원</span><b>월 1,000원</b></span></div>
+    </div>
+    <p class="sub center mt" style="font-size:13px">문의·해지: 라밥 카톡채널</p>
+  </div>${nav("/history")}`;
+}
+
+// ---------- 라우터 ----------
+async function render(){
+  await stopScanner();
+  const { path, q } = route();
+  if (path.startsWith("/s/")) { // 카메라 앱으로 QR 찍은 경우: 앱 안에서 바로 판정
+    if (!store.token) return go("/join");
+    const r = await api("redeem", { secret: path.slice(3) }); showResult(r); return;
+  }
+  if (!store.token) return pageJoin(q);
+  if (path === "/join") return go("/");
+  if (path === "/scan") return pageScan();
+  if (path === "/invite") return pageInvite();
+  if (path === "/history") return pageHistory();
+  if (path.startsWith("/store/")) return pageStore(path.slice(7));
+  return pageHome();
+}
+window.addEventListener("hashchange", render);
+render();
+</script>
+</body>
+</html>
