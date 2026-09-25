@@ -60,40 +60,78 @@ async function membership(userId: string) {
 }
 
 // ---------- actions ----------
-async function join(b: { code?: string; phone?: string; device_id?: string }) {
-  const code = (b.code || "").trim().toUpperCase();
-  const phone = normPhone(b.phone || "");
-  if (!phone) return fail("휴대폰 번호 형식이 올바르지 않습니다");
-
-  // 이미 가입된 번호면 코드 없이 바로 로그인 (기기 제한 없음)
-  const { data: existing } = await db.from("users").select("*").eq("phone", phone).maybeSingle();
-  if (existing) {
-    if (existing.status !== "active") return fail("이용이 제한된 계정입니다");
-    return json({ ok: true, token: existing.token, returning: true });
-  }
-  if (!code) return fail("처음이면 초대 코드가 필요해요");
-
+async function createUser(phone: string, code: string) {
   const { data: inv } = await db.from("invites").select("*").eq("code", code).maybeSingle();
-  if (!inv) return fail("존재하지 않는 초대 코드입니다");
-  if (inv.expires_at && new Date(inv.expires_at) < new Date()) return fail("만료된 초대 코드입니다");
-  if (inv.used_count >= inv.max_uses) return fail("사용 횟수를 다 쓴 초대 코드입니다");
-
+  if (!inv) return fail("존재하지 않는 초대 코드예요");
+  if (inv.expires_at && new Date(inv.expires_at) < new Date()) return fail("만료된 초대 코드예요");
+  if (inv.used_count >= inv.max_uses) return fail("사용 횟수를 다 쓴 초대 코드예요");
   const { data: user, error } = await db.from("users")
-    .insert({ phone, device_id: b.device_id ?? null, invited_by: inv.issuer_id, invite_code_used: code })
-    .select().single();
+    .insert({ phone, invited_by: inv.issuer_id, invite_code_used: code }).select().single();
   if (error) return fail("가입 처리 중 오류: " + error.message, 500);
-
   await db.from("invites").update({ used_count: inv.used_count + 1 }).eq("code", code);
-
-  // 첫 달 무료
   const end = new Date(Date.now() + 30 * 24 * 3600 * 1000).toISOString();
   await db.from("memberships").insert({ user_id: user.id, status: "active", price_krw: 0, current_period_end: end });
-
-  // 내 초대 코드 (5명)
   const my = "R" + phone.slice(-4) + Math.random().toString(36).slice(2, 5).toUpperCase();
   await db.from("invites").insert({ code: my, issuer_id: user.id, max_uses: 5 });
-
   return json({ ok: true, token: user.token });
+}
+
+// SMS (Solapi). 키가 없으면 OTP 비활성 → 번호만으로 로그인
+const SOLAPI_KEY = Deno.env.get("SOLAPI_API_KEY"); const SOLAPI_SECRET = Deno.env.get("SOLAPI_API_SECRET"); const SMS_FROM = Deno.env.get("SMS_FROM");
+const otpEnabled = () => !!(SOLAPI_KEY && SOLAPI_SECRET && SMS_FROM);
+async function sendSms(to: string, text: string) {
+  const date = new Date().toISOString(); const salt = crypto.randomUUID().replace(/-/g, "");
+  const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(SOLAPI_SECRET!), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  const sig = Array.from(new Uint8Array(await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(date + salt)))).map((b) => b.toString(16).padStart(2, "0")).join("");
+  const r = await fetch("https://api.solapi.com/messages/v4/send", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `HMAC-SHA256 apiKey=${SOLAPI_KEY}, date=${date}, salt=${salt}, signature=${sig}` },
+    body: JSON.stringify({ message: { to, from: SMS_FROM, text } }),
+  });
+  if (!r.ok) throw new Error("SMS 발송 실패: " + (await r.text()).slice(0, 200));
+}
+
+// 1단계: 번호 입력
+async function start(b: { phone?: string; code?: string }) {
+  const phone = normPhone(b.phone || "");
+  if (!phone) return fail("휴대폰 번호 형식이 올바르지 않아요");
+  const { data: existing } = await db.from("users").select("*").eq("phone", phone).maybeSingle();
+  if (existing && existing.status !== "active") return fail("이용이 제한된 계정이에요");
+
+  if (!otpEnabled()) { // 직접 로그인 모드
+    if (existing) return json({ ok: true, mode: "direct", token: existing.token });
+    const code = (b.code || "").trim().toUpperCase();
+    if (!code) return json({ ok: true, mode: "direct", is_new: true });
+    return createUser(phone, code);
+  }
+
+  // OTP 모드: 60초 재발송 제한, 하루 10회
+  const { data: prev } = await db.from("otps").select("*").eq("phone", phone).maybeSingle();
+  if (prev) {
+    if (Date.now() - new Date(prev.last_sent_at).getTime() < 60_000) return fail("잠시 후 다시 요청해 주세요 (1분)");
+    if (prev.sent_count >= 10 && Date.now() - new Date(prev.last_sent_at).getTime() < 86_400_000) return fail("오늘 인증 요청 한도를 넘었어요");
+  }
+  const otp = String(Math.floor(100000 + Math.random() * 900000));
+  await db.from("otps").upsert({ phone, code: otp, expires_at: new Date(Date.now() + 5 * 60_000).toISOString(), attempts: 0,
+    sent_count: prev && Date.now() - new Date(prev.last_sent_at).getTime() < 86_400_000 ? prev.sent_count + 1 : 1, last_sent_at: new Date().toISOString() });
+  try { await sendSms(phone, `[라밥] 인증번호 ${otp} (5분 안에 입력)`); } catch (e) { return fail(String(e), 502); }
+  return json({ ok: true, mode: "otp", is_new: !existing });
+}
+
+// 2단계: 인증번호 확인
+async function verify(b: { phone?: string; otp?: string; code?: string }) {
+  const phone = normPhone(b.phone || ""); const otp = (b.otp || "").trim();
+  if (!phone || !/^\d{6}$/.test(otp)) return fail("인증번호 6자리를 입력해 주세요");
+  const { data: row } = await db.from("otps").select("*").eq("phone", phone).maybeSingle();
+  if (!row || new Date(row.expires_at) < new Date()) return fail("인증번호가 만료됐어요. 다시 받아주세요");
+  if (row.attempts >= 5) return fail("틀린 횟수가 많아요. 인증번호를 다시 받아주세요");
+  if (row.code !== otp) { await db.from("otps").update({ attempts: row.attempts + 1 }).eq("phone", phone); return fail("인증번호가 틀렸어요"); }
+  await db.from("otps").delete().eq("phone", phone);
+  const { data: existing } = await db.from("users").select("*").eq("phone", phone).maybeSingle();
+  if (existing) return json({ ok: true, token: existing.token });
+  const code = (b.code || "").trim().toUpperCase();
+  if (!code) return fail("처음이면 초대 코드가 필요해요");
+  return createUser(phone, code);
 }
 
 async function me(u: any) {
@@ -176,7 +214,8 @@ Deno.serve(async (req) => {
   if (req.method !== "POST") return fail("POST only", 405);
   let b: any; try { b = await req.json(); } catch { return fail("bad json"); }
 
-  if (b.action === "join") return join(b);
+  if (b.action === "start") return start(b);
+  if (b.action === "verify") return verify(b);
   const u = await auth(b.token);
   if (!u) return fail("로그인이 필요합니다", 401);
   switch (b.action) {

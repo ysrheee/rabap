@@ -155,27 +155,46 @@ const topbar = (href="#/") => `<div class="top"><a class="back" href="${href}">$
 
 // ---------- 화면 ----------
 function pageJoin(q){
-  const code = q.get("code") || "";
-  app.innerHTML = `<div class="page">
-    <h1 style="margin-top:56px">라이더님,<br>밥값 3,000원 아끼세요</h1>
-    <p class="sub">관악구 제휴 식당에서 비피크 시간에 매끼 할인</p>
-    <div class="field" style="margin-top:36px"><label>휴대폰 번호</label><input id="phone" type="tel" placeholder="010-0000-0000" inputmode="numeric"></div>
-    <div class="field"><label>초대 코드 <span style="color:var(--g400);font-weight:400">· 처음 가입할 때만</span></label><input id="code" value="${esc(code)}" placeholder="8자리 코드" autocapitalize="characters" autocomplete="off"></div>
+  const inviteFromLink = q.get("code") || "";
+  let step = "phone", isNew = false, mode = null;
+  const draw = () => {
+    app.innerHTML = `<div class="page">
+    <h1 style="margin-top:56px">${step === "phone" ? "라이더님,<br>밥값 3,000원 아끼세요" : "문자로 보낸<br>인증번호를 입력해 주세요"}</h1>
+    <p class="sub">${step === "phone" ? "관악구 제휴 식당에서 비피크 시간에 매끼 할인" : `${$("#phone")?.value || phoneVal} 로 보냈어요`}</p>
+    <div class="field" style="margin-top:36px${step === "phone" ? "" : ";display:none"}"><label>휴대폰 번호</label><input id="phone" type="tel" placeholder="010-0000-0000" inputmode="numeric" value="${esc(phoneVal)}"></div>
+    ${step === "otp" ? `<div class="field" style="margin-top:36px"><label>인증번호</label><input id="otp" type="tel" placeholder="6자리" inputmode="numeric" maxlength="6" autocomplete="one-time-code"></div>` : ""}
+    <div class="field" id="codeWrap" style="${(step === "phone" && !inviteFromLink) || (step === "otp" && !isNew) ? "display:none" : ""}"><label>초대 코드 <span style="color:var(--g400);font-weight:400">· 처음 가입할 때만</span></label><input id="code" value="${esc(codeVal)}" placeholder="8자리 코드" autocapitalize="characters" autocomplete="off"></div>
     <div id="err" class="err"></div>
-    <div class="sec" style="margin-top:28px">
+    ${step === "phone" ? `<div class="sec" style="margin-top:28px">
       <div class="step"><b>1</b><span>초대 코드로 시작하면 첫 달 무료예요</span></div>
       <div class="step"><b>2</b><span>할인 시간(14~17시, 20~24시)에 제휴 식당 방문</span></div>
       <div class="step"><b>3</b><span>카운터 QR을 찍고 할인 화면을 보여주면 끝</span></div>
     </div>
-    <p class="cap center mt24">이미 가입했다면 번호만 넣으면 돼요.<br>시작하면 <a href="privacy.html" style="color:var(--g500)">개인정보처리방침</a>에 동의한 것으로 봐요.<br>첫 달 무료, 이후 월 1,000원 (정가 3,000원)</p>
+    <p class="cap center mt24">시작하면 <a href="privacy.html" style="color:var(--g500)">개인정보처리방침</a>에 동의한 것으로 봐요.<br>첫 달 무료, 이후 월 1,000원 (정가 3,000원)</p>` : `<button class="btn line mt24" id="resend">인증번호 다시 받기</button>`}
     <div style="height:72px"></div>
   </div>
-  <div class="cta"><button class="btn" id="joinBtn">시작하기</button></div>`;
-  $("#joinBtn").onclick = async () => {
-    const b = $("#joinBtn"); b.disabled = true; b.textContent = "확인 중…"; $("#err").textContent = "";
-    const r = await api("join", { code: $("#code").value, phone: $("#phone").value, device_id: deviceId() });
-    if (r.ok) { store.token = r.token; go("/"); } else { $("#err").textContent = r.reason; b.disabled = false; b.textContent = "시작하기"; }
+  <div class="cta"><button class="btn" id="go">${step === "phone" ? "시작하기" : "확인"}</button></div>`;
+    $("#go").onclick = submit; if ($("#resend")) $("#resend").onclick = () => { step = "phone"; draw(); };
+    ($("#otp") || $("#phone"))?.focus();
   };
+  let phoneVal = "", codeVal = inviteFromLink;
+  const busy = (on, label) => { const b = $("#go"); b.disabled = on; b.textContent = label; };
+  async function submit(){
+    $("#err").textContent = "";
+    phoneVal = $("#phone")?.value || phoneVal; codeVal = $("#code")?.value || codeVal;
+    if (step === "phone") {
+      busy(true, "확인 중…");
+      const r = await api("start", { phone: phoneVal, code: codeVal });
+      if (!r.ok) { $("#err").textContent = r.reason; busy(false, "시작하기"); return; }
+      if (r.token) { store.token = r.token; return go("/"); }
+      if (r.mode === "direct" && r.is_new) { isNew = true; $("#codeWrap").style.display = ""; $("#err").textContent = "처음이시네요. 초대 코드를 입력해 주세요"; busy(false, "시작하기"); $("#code").focus(); return; }
+      mode = r.mode; isNew = !!r.is_new; step = "otp"; draw(); return;
+    }
+    busy(true, "확인 중…");
+    const r = await api("verify", { phone: phoneVal, otp: $("#otp").value, code: codeVal });
+    if (r.ok) { store.token = r.token; go("/"); } else { $("#err").textContent = r.reason; busy(false, "확인"); }
+  }
+  draw();
 }
 
 async function pageHome(){
