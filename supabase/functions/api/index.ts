@@ -71,7 +71,12 @@ async function join(b: { code?: string; phone?: string; device_id?: string }) {
   if (existing) {
     if (existing.status !== "active") return fail("이용이 제한된 계정입니다");
     if (b.device_id && existing.device_id === b.device_id) return json({ ok: true, token: existing.token, returning: true });
-    return fail("이미 가입된 번호입니다. 다른 기기에서는 로그인할 수 없어요. 문의: 라밥 카톡채널");
+    // 새 기기 재로그인: 가입 때 쓴 초대 코드가 일치하면 기기 재바인딩
+    if (code === existing.invite_code_used) {
+      await db.from("users").update({ device_id: b.device_id ?? null }).eq("id", existing.id);
+      return json({ ok: true, token: existing.token, returning: true });
+    }
+    return fail("이미 가입된 번호예요. 가입할 때 쓴 초대 코드를 넣으면 이 기기로 다시 로그인돼요");
   }
 
   const { data: inv } = await db.from("invites").select("*").eq("code", code).maybeSingle();
