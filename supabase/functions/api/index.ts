@@ -63,21 +63,15 @@ async function membership(userId: string) {
 async function join(b: { code?: string; phone?: string; device_id?: string }) {
   const code = (b.code || "").trim().toUpperCase();
   const phone = normPhone(b.phone || "");
-  if (!code) return fail("초대 코드를 입력하세요");
   if (!phone) return fail("휴대폰 번호 형식이 올바르지 않습니다");
 
-  // 재설치: 같은 번호 + 같은 기기면 토큰 재발급
+  // 이미 가입된 번호면 코드 없이 바로 로그인 (기기 제한 없음)
   const { data: existing } = await db.from("users").select("*").eq("phone", phone).maybeSingle();
   if (existing) {
     if (existing.status !== "active") return fail("이용이 제한된 계정입니다");
-    if (b.device_id && existing.device_id === b.device_id) return json({ ok: true, token: existing.token, returning: true });
-    // 새 기기 재로그인: 가입 때 쓴 초대 코드가 일치하면 기기 재바인딩
-    if (code === existing.invite_code_used) {
-      await db.from("users").update({ device_id: b.device_id ?? null }).eq("id", existing.id);
-      return json({ ok: true, token: existing.token, returning: true });
-    }
-    return fail("이미 가입된 번호예요. 가입할 때 쓴 초대 코드를 넣으면 이 기기로 다시 로그인돼요");
+    return json({ ok: true, token: existing.token, returning: true });
   }
+  if (!code) return fail("처음이면 초대 코드가 필요해요");
 
   const { data: inv } = await db.from("invites").select("*").eq("code", code).maybeSingle();
   if (!inv) return fail("존재하지 않는 초대 코드입니다");
