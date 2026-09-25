@@ -3,68 +3,104 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#FF6B35">
+<meta name="theme-color" content="#FFFFFF">
 <title>라밥</title>
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon-192.png">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <style>
-:root{--brand:#FF6B35;--brand-dark:#E5561F;--ink:#1A1A1A;--sub:#6B6B6B;--line:#EDEDED;--bg:#F7F7F7;--card:#FFF;--ok:#1FA65A;--bad:#D93025;--radius:14px}
+:root{
+  --brand:#FF6B35;--brand-press:#E85A26;--brand-tint:#FFF1EB;
+  --g900:#191F28;--g800:#333D4B;--g700:#4E5968;--g600:#6B7684;--g500:#8B95A1;--g400:#B0B8C1;--g300:#D1D6DB;--g200:#E5E8EB;--g100:#F2F4F6;--g50:#F9FAFB;
+  --green:#00C471;--green-tint:#E8F9F1;--red:#F04452;--red-tint:#FDEDEE;
+  --r:16px;--nav:64px;
+}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,"Pretendard","Noto Sans KR",system-ui,sans-serif;font-size:16px;line-height:1.45}
-body{padding-bottom:calc(72px + env(safe-area-inset-bottom))}
-#app{max-width:520px;margin:0 auto;min-height:100vh}
-.page{padding:20px 16px}
-h1{font-size:22px;margin:0 0 4px;font-weight:800}
-h2{font-size:18px;margin:24px 0 10px;font-weight:700}
-p{margin:0 0 12px}
-.sub{color:var(--sub);font-size:14px}
-.card{background:var(--card);border-radius:var(--radius);padding:16px;box-shadow:0 1px 3px rgba(0,0,0,.06);margin-bottom:12px}
-.btn{display:block;width:100%;border:0;border-radius:12px;padding:16px;font-size:17px;font-weight:700;background:var(--brand);color:#fff;text-align:center;text-decoration:none;cursor:pointer}
-.btn:active{background:var(--brand-dark)}
-.btn.ghost{background:#fff;color:var(--ink);border:1.5px solid var(--line)}
-.btn.sm{padding:11px;font-size:15px;border-radius:10px}
-.btn:disabled{background:#CFCFCF;color:#fff}
-input{width:100%;border:1.5px solid var(--line);border-radius:12px;padding:15px;font-size:18px;background:#fff;outline:0}
-input:focus{border-color:var(--brand)}
-label{display:block;font-size:13px;color:var(--sub);margin:14px 0 6px;font-weight:600}
-.err{color:var(--bad);font-size:14px;margin-top:10px;font-weight:600}
-.badge{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:6px 12px;font-size:13px;font-weight:700}
-.badge.on{background:#E6F6EC;color:var(--ok)}
-.badge.off{background:#F1F1F1;color:var(--sub)}
-.badge.done{background:#FFF0E8;color:var(--brand-dark)}
-.hero{background:linear-gradient(135deg,var(--brand),#FF8F5E);color:#fff;border-radius:18px;padding:22px 18px;margin-bottom:16px}
-.hero .big{font-size:26px;font-weight:800;margin:6px 0 2px}
-.hero .sub{color:rgba(255,255,255,.85)}
-.store{display:flex;gap:12px;align-items:flex-start}
-.store .name{font-weight:700;font-size:16px}
-.store .meta{font-size:13px;color:var(--sub);margin-top:2px}
-.dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:6px;background:#C4C4C4}
-.dot.on{background:var(--ok)}
-.nav{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--line);display:flex;justify-content:space-around;padding:8px 0 calc(8px + env(safe-area-inset-bottom));max-width:520px;margin:0 auto}
-.nav a{flex:1;text-align:center;font-size:11px;color:var(--sub);text-decoration:none;font-weight:600}
-.nav a .ic{font-size:22px;display:block;line-height:1.1}
-.nav a.on{color:var(--brand)}
-.nav a.qr .ic{background:var(--brand);color:#fff;border-radius:50%;width:48px;height:48px;line-height:48px;margin:-22px auto 2px;box-shadow:0 4px 12px rgba(255,107,53,.4)}
-#reader{width:100%;border-radius:var(--radius);overflow:hidden;background:#000;min-height:280px}
-.result{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;text-align:center;z-index:50;color:#fff}
-.result.ok{background:var(--ok)}
-.result.bad{background:var(--bad)}
-.result .amt{font-size:44px;font-weight:900;margin:8px 0}
-.result .st{font-size:22px;font-weight:700}
-.result .tm{font-size:15px;opacity:.9;margin-top:6px}
-.result .cnt{margin-top:28px;font-size:14px;opacity:.85}
-.result .btn{margin-top:20px;background:#fff;color:var(--ink);max-width:280px}
-.row{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--line)}
-.row:last-child{border-bottom:0}
-.code{font-family:ui-monospace,Menlo,monospace;font-size:26px;font-weight:800;letter-spacing:2px;text-align:center;padding:14px;background:#FFF6F2;border-radius:12px;color:var(--brand-dark)}
-.strike{text-decoration:line-through;opacity:.7;margin-right:6px}
+html,body{margin:0;background:#fff;color:var(--g900);font-family:"Pretendard Variable",Pretendard,-apple-system,"Apple SD Gothic Neo",system-ui,sans-serif;font-size:15px;line-height:1.5;letter-spacing:-.01em;-webkit-font-smoothing:antialiased}
+body{padding-bottom:calc(var(--nav) + env(safe-area-inset-bottom))}
+#app{max-width:480px;margin:0 auto;min-height:100vh}
+.page{padding:12px 20px 32px}
+.top{display:flex;align-items:center;height:52px;margin:0 -4px}
+.back{width:40px;height:40px;display:flex;align-items:center;justify-content:center;color:var(--g800);text-decoration:none;border-radius:50%}
+.back:active{background:var(--g100)}
+h1{font-size:24px;line-height:1.35;margin:16px 0 6px;font-weight:700;letter-spacing:-.02em}
+h2{font-size:17px;margin:28px 0 12px;font-weight:700}
+p{margin:0}
+.sub{color:var(--g600);font-size:14px}
+.cap{color:var(--g500);font-size:13px}
+.sec{background:var(--g100);border-radius:20px;padding:20px;margin-top:16px}
+.sec.white{background:#fff;border:1px solid var(--g200)}
+.btn{display:flex;align-items:center;justify-content:center;width:100%;height:56px;border:0;border-radius:14px;font-size:17px;font-weight:600;background:var(--brand);color:#fff;text-decoration:none;cursor:pointer;transition:transform .08s,background .08s;font-family:inherit}
+.btn:active{background:var(--brand-press);transform:scale(.985)}
+.btn.sub2{background:var(--g100);color:var(--g800)}
+.btn.sub2:active{background:var(--g200)}
+.btn.line{background:#fff;color:var(--g800);border:1px solid var(--g200);height:50px;font-size:15px}
+.btn:disabled{background:var(--g200);color:var(--g400);transform:none}
+.cta{position:fixed;left:0;right:0;bottom:0;padding:12px 20px calc(12px + env(safe-area-inset-bottom));background:linear-gradient(to top,#fff 70%,rgba(255,255,255,0));max-width:480px;margin:0 auto}
+.cta.nav-on{bottom:calc(var(--nav) + env(safe-area-inset-bottom))}
+.field{margin-top:18px}
+.field label{display:block;font-size:13px;color:var(--g600);margin-bottom:8px;font-weight:500}
+.field input{width:100%;height:56px;border:2px solid transparent;border-radius:14px;padding:0 16px;font-size:18px;font-weight:500;background:var(--g100);outline:0;color:var(--g900);font-family:inherit;transition:border-color .12s,background .12s}
+.field input:focus{border-color:var(--brand);background:#fff}
+.field input::placeholder{color:var(--g400);font-weight:400}
+.err{color:var(--red);font-size:13px;margin-top:10px;font-weight:500}
+.chip{display:inline-flex;align-items:center;gap:6px;border-radius:8px;padding:5px 10px;font-size:13px;font-weight:600}
+.chip.on{background:var(--green-tint);color:#00A05B}
+.chip.off{background:var(--g100);color:var(--g600)}
+.chip.done{background:var(--brand-tint);color:var(--brand-press)}
+.chip .d{width:6px;height:6px;border-radius:50%;background:currentColor}
+.status{padding:24px 0 8px}
+.status .big{font-size:26px;font-weight:700;letter-spacing:-.02em;line-height:1.3;margin-top:12px}
+.status .sub{margin-top:6px}
+.list{margin:0 -20px}
+.row{display:flex;align-items:center;gap:14px;padding:16px 20px;text-decoration:none;color:inherit;transition:background .08s}
+.row:active{background:var(--g50)}
+.ic{width:44px;height:44px;border-radius:14px;background:var(--g100);display:flex;align-items:center;justify-content:center;font-size:20px;flex:none}
+.ic.on{background:var(--brand-tint)}
+.row .t{flex:1;min-width:0}
+.row .n{font-size:16px;font-weight:600;color:var(--g900);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .m{font-size:13px;color:var(--g500);margin-top:2px}
+.row .r{font-size:15px;font-weight:700;color:var(--brand);flex:none}
+.row .chev{color:var(--g300);flex:none;margin-left:-4px}
+.kv{display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-bottom:1px solid var(--g200);font-size:15px}
+.kv:last-child{border-bottom:0}
+.kv .k{color:var(--g600)}
+.kv .v{font-weight:600;text-align:right}
+.nav{position:fixed;left:0;right:0;bottom:0;height:calc(var(--nav) + env(safe-area-inset-bottom));padding-bottom:env(safe-area-inset-bottom);background:#fff;border-top:1px solid var(--g100);display:flex;max-width:480px;margin:0 auto;z-index:20}
+.nav a{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:11px;color:var(--g400);text-decoration:none;font-weight:500}
+.nav a svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.nav a.on{color:var(--g900)}
+#reader{width:100%;border-radius:20px;overflow:hidden;background:#000;min-height:300px;margin-top:16px}
+#reader video{border-radius:20px}
+.result{position:fixed;inset:0;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px calc(32px + env(safe-area-inset-bottom));text-align:center;z-index:50;animation:up .28s cubic-bezier(.2,.8,.2,1)}
+@keyframes up{from{transform:translateY(24px);opacity:0}to{transform:none;opacity:1}}
+.mark{width:88px;height:88px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin-bottom:24px;animation:pop .4s cubic-bezier(.2,.9,.3,1.3)}
+@keyframes pop{from{transform:scale(.5);opacity:0}to{transform:none;opacity:1}}
+.mark.ok{background:var(--brand)}
+.mark.bad{background:var(--g100)}
+.mark svg{width:44px;height:44px;stroke:#fff;fill:none;stroke-width:3.2;stroke-linecap:round;stroke-linejoin:round}
+.mark.bad svg{stroke:var(--g600)}
+.result .amt{font-size:40px;font-weight:800;letter-spacing:-.03em;color:var(--g900);line-height:1.1}
+.result .st{font-size:22px;font-weight:700;margin-top:10px}
+.result .tm{font-size:15px;color:var(--g600);margin-top:8px;line-height:1.5}
+.result .show{margin-top:28px;background:var(--brand-tint);color:var(--brand-press);border-radius:14px;padding:14px 18px;font-weight:600;font-size:15px;width:100%}
+.result .cnt{margin-top:14px;font-size:13px;color:var(--g500)}
+.result .btn{position:absolute;left:20px;right:20px;bottom:calc(20px + env(safe-area-inset-bottom));width:auto}
+.code{font-family:inherit;font-size:30px;font-weight:800;letter-spacing:.12em;text-align:center;padding:18px 0 6px;color:var(--g900)}
+.strike{text-decoration:line-through;color:var(--g400);font-weight:400;margin-right:6px}
 .center{text-align:center}
-.mt{margin-top:16px}
-.hidden{display:none}
+.mt8{margin-top:8px}.mt16{margin-top:16px}.mt24{margin-top:24px}
+.step{display:flex;gap:12px;padding:10px 0;align-items:flex-start}
+.step b{width:24px;height:24px;border-radius:50%;background:var(--g900);color:#fff;font-size:12px;display:flex;align-items:center;justify-content:center;flex:none;margin-top:1px}
+.step span{color:var(--g700);font-size:14px;line-height:1.5}
+.spin{display:flex;justify-content:center;padding:80px 0}
+.spin i{width:28px;height:28px;border:3px solid var(--g200);border-top-color:var(--brand);border-radius:50%;animation:rot .7s linear infinite}
+@keyframes rot{to{transform:rotate(360deg)}}
+.empty{padding:32px 0;text-align:center;color:var(--g500);font-size:14px}
 </style>
 </head>
 <body>
-<div id="app"><div class="page center sub">불러오는 중…</div></div>
+<div id="app"><div class="spin"><i></i></div></div>
 <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <script>
 const API = "https://zthrcavaccgtvsyffpeh.supabase.co/functions/v1/api";
@@ -84,55 +120,68 @@ function go(path){ location.hash = "#" + path; }
 function route(){ const h = location.hash.replace(/^#/, "") || "/"; const [path, q] = h.split("?"); return { path, q: new URLSearchParams(q || "") }; }
 let scanner = null;
 async function stopScanner(){ if (scanner) { try { await scanner.stop(); scanner.clear(); } catch {} scanner = null; } }
+const loading = () => `<div class="spin"><i></i></div>`;
+const ICON = {
+  home:`<svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg>`,
+  qr:`<svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><path d="M14 14h3v3h-3zM20 14v0M17 20h3v1"/></svg>`,
+  gift:`<svg viewBox="0 0 24 24"><path d="M20 12v9H4v-9M2 7h20v5H2zM12 22V7M12 7c-2-4-7-3-6-1s6 1 6 1zm0 0c2-4 7-3 6-1s-6 1-6 1z"/></svg>`,
+  list:`<svg viewBox="0 0 24 24"><path d="M6 3h12a1 1 0 0 1 1 1v17l-3-2-2 2-2-2-2 2-2-2-3 2V4a1 1 0 0 1 1-1zM8 8h8M8 12h8M8 16h5"/></svg>`,
+  chev:`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>`,
+  back:`<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>`,
+  check:`<svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>`,
+  x:`<svg viewBox="0 0 24 24"><path d="M7 7l10 10M17 7L7 17"/></svg>`,
+};
+function nav(active){
+  const it = (p, ic, t) => `<a href="#${p}" class="${active===p?"on":""}">${ICON[ic]}<span>${t}</span></a>`;
+  return `<nav class="nav">${it("/","home","홈")}${it("/scan","qr","QR 할인")}${it("/invite","gift","초대")}${it("/history","list","내역")}</nav>`;
+}
+const topbar = (href="#/") => `<div class="top"><a class="back" href="${href}">${ICON.back}</a></div>`;
 
 // ---------- 화면 ----------
-function nav(active){
-  const it = (p, ic, t, cls="") => `<a href="#${p}" class="${cls} ${active===p?"on":""}"><span class="ic">${ic}</span>${t}</a>`;
-  return `<nav class="nav">${it("/","🏠","홈")}${it("/scan","▣","QR 할인","qr")}${it("/invite","✉","초대")}${it("/history","☰","내역")}</nav>`;
-}
-
 function pageJoin(q){
   const code = q.get("code") || "";
   app.innerHTML = `<div class="page">
-    <div class="hero"><div class="sub">관악구 라이더 전용</div><div class="big">라밥</div><div class="sub">비피크 시간, 제휴 식당에서 매끼 3,000원 할인</div></div>
-    <div class="card">
-      <label>초대 코드</label><input id="code" value="${esc(code)}" placeholder="예: A1B2C3D4" autocapitalize="characters" autocomplete="off">
-      <label>휴대폰 번호</label><input id="phone" type="tel" placeholder="010-0000-0000" inputmode="numeric">
-      <div id="err" class="err"></div>
-      <button class="btn mt" id="joinBtn">시작하기 · 첫 달 무료</button>
-      <p class="sub center mt" style="font-size:12px">정가 월 3,000원. 첫 달 무료 후 월 1,000원. 시작 시 <a href="privacy.html" style="color:var(--sub)">개인정보처리방침</a>에 동의한 것으로 봅니다.</p>
+    <h1 style="margin-top:56px">라이더님,<br>밥값 3,000원 아끼세요</h1>
+    <p class="sub">관악구 제휴 식당에서 비피크 시간에 매끼 할인</p>
+    <div class="field" style="margin-top:36px"><label>초대 코드</label><input id="code" value="${esc(code)}" placeholder="8자리 코드" autocapitalize="characters" autocomplete="off"></div>
+    <div class="field"><label>휴대폰 번호</label><input id="phone" type="tel" placeholder="010-0000-0000" inputmode="numeric"></div>
+    <div id="err" class="err"></div>
+    <div class="sec" style="margin-top:28px">
+      <div class="step"><b>1</b><span>초대 코드로 시작하면 첫 달 무료예요</span></div>
+      <div class="step"><b>2</b><span>할인 시간(14~17시, 20~24시)에 제휴 식당 방문</span></div>
+      <div class="step"><b>3</b><span>카운터 QR을 찍고 할인 화면을 보여주면 끝</span></div>
     </div>
-    <div class="card sub" style="font-size:14px">
-      <b>이용 안내</b><br>· 할인 시간: 14:00~17:00, 20:00~24:00<br>· 하루 1회, 제휴 식당 카운터의 QR을 찍으면 끝<br>· 계산할 때 할인 화면을 사장님께 보여주세요
-    </div>
-  </div>`;
+    <p class="cap center mt24">시작하면 <a href="privacy.html" style="color:var(--g500)">개인정보처리방침</a>에 동의한 것으로 봐요.<br>첫 달 무료, 이후 월 1,000원 (정가 3,000원)</p>
+    <div style="height:72px"></div>
+  </div>
+  <div class="cta"><button class="btn" id="joinBtn">시작하기</button></div>`;
   $("#joinBtn").onclick = async () => {
-    const b = $("#joinBtn"); b.disabled = true; $("#err").textContent = "";
+    const b = $("#joinBtn"); b.disabled = true; b.textContent = "확인 중…"; $("#err").textContent = "";
     const r = await api("join", { code: $("#code").value, phone: $("#phone").value, device_id: deviceId() });
-    if (r.ok) { store.token = r.token; go("/"); } else { $("#err").textContent = r.reason; b.disabled = false; }
+    if (r.ok) { store.token = r.token; go("/"); } else { $("#err").textContent = r.reason; b.disabled = false; b.textContent = "시작하기"; }
   };
 }
 
 async function pageHome(){
-  app.innerHTML = `<div class="page center sub">불러오는 중…</div>${nav("/")}`;
+  app.innerHTML = `<div class="page">${loading()}</div>${nav("/")}`;
   const [me, st] = await Promise.all([api("me"), api("stores")]);
   if (!me.ok) return;
-  let badge, title, sub;
-  if (me.used_today) { badge = `<span class="badge done">오늘 사용 완료</span>`; title = "오늘 할인 사용했어요"; sub = `${esc(me.used_today.store)} · 내일 또 만나요`; }
-  else if (!me.membership?.live) { badge = `<span class="badge off">멤버십 만료</span>`; title = "멤버십이 만료됐어요"; sub = "라밥 카톡채널로 문의해 주세요"; }
-  else if (me.in_window) { badge = `<span class="badge on">● 지금 할인 가능</span>`; title = "지금 3,000원 할인 시간"; sub = `현재 ${me.now} · 식당 QR을 찍으세요`; }
-  else { badge = `<span class="badge off">할인 시간 아님</span>`; title = me.next_window ? `${me.next_window}부터 할인 가능` : "오늘 할인 시간 끝"; sub = me.next_window ? `현재 ${me.now}` : "내일 14:00부터"; }
+  let chip, title, sub;
+  if (me.used_today) { chip = `<span class="chip done">오늘 사용 완료</span>`; title = `오늘 3,000원 아꼈어요`; sub = `${esc(me.used_today.store)} · 내일 14시부터 다시 할인`; }
+  else if (!me.membership?.live) { chip = `<span class="chip off">멤버십 만료</span>`; title = "멤버십이 만료됐어요"; sub = "라밥 카톡채널로 문의해 주세요"; }
+  else if (me.in_window) { chip = `<span class="chip on"><i class="d"></i>지금 할인 가능</span>`; title = "지금 식당 가면<br>3,000원 할인이에요"; sub = `현재 ${me.now} · 하루 1회`; }
+  else { chip = `<span class="chip off">할인 시간 아님</span>`; title = me.next_window ? `${me.next_window}부터<br>할인 시간이에요` : "오늘 할인 시간은<br>끝났어요"; sub = me.next_window ? `현재 ${me.now} · 미리 식당을 골라두세요` : "내일 14:00부터 다시 시작"; }
   const canScan = me.membership?.live && me.in_window && !me.used_today;
-  const cards = (st.stores || []).map(s => `<a class="card store" href="#/store/${s.id}" style="text-decoration:none;color:inherit">
-      <div style="flex:1"><div class="name"><span class="dot ${s.open_now?"on":""}"></span>${esc(s.name)}</div>
-      <div class="meta">${esc(s.menu_note || "")}</div>
-      <div class="meta">${s.today_hours.length ? "오늘 " + s.today_hours.map(h=>h.join("~")).join(", ") : "오늘 휴무"}${s.open_now?"":" · 영업 전/후"}</div></div>
-      <div style="font-weight:800;color:var(--brand)">-${won(s.discount_krw)}</div></a>`).join("");
+  const rows = (st.stores || []).map(s => `<a class="row" href="#/store/${s.id}">
+      <div class="ic ${s.open_now?"on":""}">🍚</div>
+      <div class="t"><div class="n">${esc(s.name)}</div>
+      <div class="m">${s.open_now ? "영업 중" : "영업시간 아님"}${s.menu_note ? " · " + esc(s.menu_note) : ""}</div></div>
+      <div class="r">-3,000원</div><span class="chev">${ICON.chev}</span></a>`).join("");
   app.innerHTML = `<div class="page">
-    <div class="hero">${badge}<div class="big">${title}</div><div class="sub">${sub}</div></div>
-    ${canScan ? `<a class="btn" href="#/scan">QR 찍고 3,000원 할인</a>` : ""}
-    <h2>제휴 식당 <span class="sub" style="font-weight:500;font-size:14px">${(st.stores||[]).length}곳</span></h2>
-    ${cards || `<div class="card sub center">제휴 식당을 준비 중이에요</div>`}
+    <div class="status">${chip}<div class="big">${title}</div><p class="sub">${sub}</p></div>
+    ${canScan ? `<a class="btn mt16" href="#/scan">QR 찍고 할인받기</a>` : ""}
+    <h2>제휴 식당 <span class="cap" style="font-weight:500">${(st.stores||[]).length}</span></h2>
+    <div class="list">${rows || `<div class="empty">제휴 식당을 준비하고 있어요</div>`}</div>
   </div>${nav("/")}`;
   window._stores = st.stores || [];
 }
@@ -143,51 +192,54 @@ async function pageStore(id){
   if (!s) return go("/");
   const naver = s.naver_url || `https://map.naver.com/p/search/${encodeURIComponent(s.name + " " + s.address)}`;
   app.innerHTML = `<div class="page">
-    <a href="#/" class="sub" style="text-decoration:none">‹ 홈</a>
-    <h1 class="mt">${esc(s.name)}</h1>
+    ${topbar("#/")}
+    <span class="chip ${s.open_now?"on":"off"}">${s.open_now ? '<i class="d"></i>영업 중' : "영업시간 아님"}</span>
+    <h1 style="margin-top:12px">${esc(s.name)}</h1>
     <p class="sub">${esc(s.address)}</p>
-    <div class="card">
-      <div class="row"><span class="sub">할인</span><b style="color:var(--brand)">${won(s.discount_krw)} 할인</b></div>
-      <div class="row"><span class="sub">대표 메뉴</span><span>${esc(s.menu_note || "-")}</span></div>
-      <div class="row"><span class="sub">오늘 영업</span><span>${s.today_hours.length ? s.today_hours.map(h=>h.join("~")).join(", ") : "휴무"}</span></div>
-      <div class="row"><span class="sub">지금</span><span>${s.open_now ? "🟢 영업 중" : "⚪ 영업시간 아님"}</span></div>
+    <div class="sec mt24">
+      <div class="kv"><span class="k">라밥 할인</span><span class="v" style="color:var(--brand)">${won(s.discount_krw)}</span></div>
+      <div class="kv"><span class="k">대표 메뉴</span><span class="v">${esc(s.menu_note || "-")}</span></div>
+      <div class="kv"><span class="k">오늘 영업</span><span class="v">${s.today_hours.length ? s.today_hours.map(h=>h.join("~")).join("<br>") : "휴무"}</span></div>
+      <div class="kv"><span class="k">할인 시간</span><span class="v">14~17시 · 20~24시</span></div>
     </div>
-    <a class="btn ghost" href="${naver}" target="_blank">네이버 지도에서 길찾기</a>
-    ${s.phone ? `<a class="btn ghost mt" href="tel:${esc(s.phone)}">전화하기</a>` : ""}
-    <a class="btn mt" href="#/scan">QR 찍고 할인받기</a>
-    <p class="sub center mt" style="font-size:13px">할인은 14~17시, 20~24시 · 하루 1회</p>
-  </div>${nav("/")}`;
+    <div style="display:flex;gap:10px" class="mt16">
+      <a class="btn line" href="${naver}" target="_blank">길찾기</a>
+      ${s.phone ? `<a class="btn line" href="tel:${esc(s.phone)}">전화</a>` : ""}
+    </div>
+    <div style="height:88px"></div>
+  </div>
+  <div class="cta"><a class="btn" href="#/scan">QR 찍고 할인받기</a></div>`;
 }
 
 function showResult(r){
-  const el = document.createElement("div");
+  const el = document.createElement("div"); el.className = "result";
   if (r.ok) {
-    el.className = "result ok";
-    el.innerHTML = `<div class="st">${esc(r.store)}</div><div class="amt">-${won(r.discount_krw)}</div><div class="st">할인 적용됐어요</div>
-      <div class="tm">${r.now} · 계산할 때 이 화면을 보여주세요</div><div class="cnt">이 화면은 <span id="c">15</span>초 후 닫힙니다</div><button class="btn">확인</button>`;
+    el.innerHTML = `<div class="mark ok">${ICON.check}</div><div class="amt">-${won(r.discount_krw)}</div><div class="st">${esc(r.store)}</div>
+      <div class="tm">${r.now} 할인 적용 완료</div>
+      <div class="show">계산할 때 이 화면을 사장님께 보여주세요</div>
+      <div class="cnt"><span id="c">20</span>초 후 자동으로 닫혀요</div><button class="btn">확인</button>`;
   } else {
-    el.className = "result bad";
-    el.innerHTML = `<div class="st">할인을 적용할 수 없어요</div><div class="tm" style="font-size:18px;margin-top:12px">${esc(r.reason)}</div><button class="btn">확인</button>`;
+    el.innerHTML = `<div class="mark bad">${ICON.x}</div><div class="st">할인을 적용할 수 없어요</div><div class="tm">${esc(r.reason)}</div><button class="btn sub2">확인</button>`;
   }
   document.body.appendChild(el);
-  const close = () => { el.remove(); clearInterval(t); go("/"); };
+  const close = () => { el.remove(); if (t) clearInterval(t); go("/"); };
   el.querySelector(".btn").onclick = close;
-  let n = 15; const t = r.ok ? setInterval(() => { n--; const c = el.querySelector("#c"); if (c) c.textContent = n; if (n <= 0) close(); }, 1000) : null;
+  let n = 20; const t = r.ok ? setInterval(() => { n--; const c = el.querySelector("#c"); if (c) c.textContent = n; if (n <= 0) close(); }, 1000) : null;
 }
 
 async function pageScan(){
   app.innerHTML = `<div class="page">
-    <a href="#/" class="sub" style="text-decoration:none">‹ 홈</a>
-    <h1 class="mt">식당 QR을 찍으세요</h1>
-    <p class="sub">카운터에 붙은 라밥 QR 스티커</p>
+    ${topbar("#/")}
+    <h1>식당 QR을 찍어주세요</h1>
+    <p class="sub">카운터에 붙은 라밥 스티커예요</p>
     <div id="reader"></div>
     <div id="err" class="err"></div>
-    <p class="sub center mt" style="font-size:13px">카메라가 안 열리면 브라우저 설정에서 카메라 권한을 허용해 주세요</p>
+    <p class="cap center mt16">카메라가 안 열리면 브라우저 설정에서 카메라 권한을 허용해 주세요</p>
   </div>${nav("/scan")}`;
   let busy = false;
   try {
     scanner = new Html5Qrcode("reader");
-    await scanner.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 240, height: 240 } }, async (text) => {
+    await scanner.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 230, height: 230 } }, async (text) => {
       if (busy) return; busy = true;
       await stopScanner();
       const r = await api("redeem", { secret: text });
@@ -197,43 +249,45 @@ async function pageScan(){
 }
 
 async function pageInvite(){
-  app.innerHTML = `<div class="page center sub">불러오는 중…</div>${nav("/invite")}`;
+  app.innerHTML = `<div class="page">${loading()}</div>${nav("/invite")}`;
   const me = await api("me"); if (!me.ok) return;
   const inv = me.invite || { code: "-", used_count: 0, max_uses: 0 };
   const link = `${location.origin}${location.pathname}#/join?code=${inv.code}`;
   const msg = `라밥 초대장 🍚\n관악 라이더끼리 제휴 식당에서 매끼 3,000원 할인받는 앱이에요. 첫 달 무료.\n초대 코드: ${inv.code}\n${link}`;
   app.innerHTML = `<div class="page">
-    <h1>동료 라이더 초대</h1>
-    <p class="sub">초대한 사람만 가입할 수 있어요. 내 코드로 ${inv.max_uses}명까지.</p>
-    <div class="card"><div class="code">${esc(inv.code)}</div>
-      <p class="sub center mt">${inv.used_count} / ${inv.max_uses}명 가입</p>
-      <button class="btn" id="share">초대 링크 공유하기</button>
-      <button class="btn ghost sm mt" id="copy">링크 복사</button>
+    <h1 style="margin-top:28px">같이 뛰는 동료를<br>초대해 보세요</h1>
+    <p class="sub">초대받은 라이더만 가입할 수 있어요. ${inv.max_uses}명까지.</p>
+    <div class="sec mt24 center">
+      <div class="cap">내 초대 코드</div>
+      <div class="code">${esc(inv.code)}</div>
+      <div class="cap">${inv.used_count}명 가입 · ${Math.max(inv.max_uses - inv.used_count, 0)}자리 남음</div>
     </div>
+    <button class="btn mt16" id="share">카카오톡으로 초대하기</button>
+    <button class="btn sub2 mt8" id="copy">링크 복사</button>
   </div>${nav("/invite")}`;
   $("#share").onclick = async () => { if (navigator.share) { try { await navigator.share({ text: msg }); } catch {} } else { await navigator.clipboard.writeText(msg); alert("초대 문구를 복사했어요. 카톡에 붙여넣으세요."); } };
   $("#copy").onclick = async () => { await navigator.clipboard.writeText(link); alert("링크를 복사했어요"); };
 }
 
 async function pageHistory(){
-  app.innerHTML = `<div class="page center sub">불러오는 중…</div>${nav("/history")}`;
+  app.innerHTML = `<div class="page">${loading()}</div>${nav("/history")}`;
   const [me, h] = await Promise.all([api("me"), api("history")]);
   if (!me.ok) return;
   const total = (h.items || []).reduce((a, x) => a + x.krw, 0);
-  const rows = (h.items || []).map(x => { const d = new Date(x.at); return `<div class="row"><div><b>${esc(x.store)}</b><div class="sub" style="font-size:13px">${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}</div></div><span style="color:var(--brand);font-weight:700">-${won(x.krw)}</span></div>`; }).join("");
+  const rows = (h.items || []).map(x => { const d = new Date(x.at); return `<div class="row" style="padding-left:0;padding-right:0"><div class="ic">🍚</div><div class="t"><div class="n">${esc(x.store)}</div><div class="m">${d.getMonth()+1}월 ${d.getDate()}일 ${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}</div></div><div class="r" style="color:var(--g900)">-${won(x.krw)}</div></div>`; }).join("");
   const m = me.membership; const end = m ? new Date(m.period_end) : null;
   app.innerHTML = `<div class="page">
-    <h1>이용 내역</h1>
-    <div class="hero"><div class="sub">지금까지 아낀 돈</div><div class="big">${won(total)}</div><div class="sub">${me.total_count}회 사용</div></div>
-    <div class="card">${rows || `<div class="sub center">아직 사용 내역이 없어요</div>`}</div>
+    <div class="status"><span class="cap">지금까지 아낀 돈</span><div class="big" style="font-size:34px;margin-top:6px">${won(total)}</div><p class="sub">${me.total_count}번 할인받았어요</p></div>
+    <h2>이용 내역</h2>
+    ${rows || `<div class="empty">아직 사용 내역이 없어요</div>`}
     <h2>멤버십</h2>
-    <div class="card">
-      <div class="row"><span class="sub">번호</span><span>${esc(me.phone_masked)}</span></div>
-      <div class="row"><span class="sub">상태</span><span>${m?.live ? "이용 중 (첫 달 무료)" : "만료"}</span></div>
-      <div class="row"><span class="sub">무료 기간</span><span>${end ? `${end.getMonth()+1}/${end.getDate()}까지` : "-"}</span></div>
-      <div class="row"><span class="sub">이후 요금</span><span><span class="strike">월 3,000원</span><b>월 1,000원</b></span></div>
+    <div class="sec">
+      <div class="kv"><span class="k">번호</span><span class="v">${esc(me.phone_masked)}</span></div>
+      <div class="kv"><span class="k">상태</span><span class="v">${m?.live ? "이용 중 · 첫 달 무료" : "만료"}</span></div>
+      <div class="kv"><span class="k">무료 기간</span><span class="v">${end ? `${end.getMonth()+1}월 ${end.getDate()}일까지` : "-"}</span></div>
+      <div class="kv"><span class="k">이후 요금</span><span class="v"><span class="strike">월 3,000원</span>월 1,000원</span></div>
     </div>
-    <p class="sub center mt" style="font-size:13px">문의·해지: 라밥 카톡채널</p>
+    <p class="cap center mt24">문의·해지는 라밥 카톡채널로</p>
   </div>${nav("/history")}`;
 }
 
@@ -241,7 +295,7 @@ async function pageHistory(){
 async function render(){
   await stopScanner();
   const { path, q } = route();
-  if (path.startsWith("/s/")) { // 카메라 앱으로 QR 찍은 경우: 앱 안에서 바로 판정
+  if (path.startsWith("/s/")) {
     if (!store.token) return go("/join");
     const r = await api("redeem", { secret: path.slice(3) }); showResult(r); return;
   }
