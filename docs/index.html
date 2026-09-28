@@ -227,11 +227,11 @@ function pageJoin(q){
     <div id="err" class="err"></div>
     <button class="btn mt24" id="go">${step === "phone" ? "시작하기" : "확인"}</button>
     ${step === "phone" ? `<div class="sec" style="margin-top:28px">
-      <div class="step"><b>1</b><span>초대 코드로 시작하면 첫 달 무료예요</span></div>
+      <div class="step"><b>1</b><span>초대 코드로 시작하면 첫 주 무료, 친구 초대마다 1주 연장</span></div>
       <div class="step"><b>2</b><span>할인 시간(14~17시)에 제휴 식당에서 8,000원 이상 주문</span></div>
       <div class="step"><b>3</b><span>계산할 때 홈 화면의 멤버십 카드를 보여주면 끝</span></div>
     </div>
-    <p class="cap center mt24">시작하면 <a href="terms.html" style="color:var(--g500)">이용약관</a>과 <a href="privacy.html" style="color:var(--g500)">개인정보처리방침</a>에 동의한 것으로 봐요.<br>첫 달 무료 · 친구 초대 1명당 1주 연장 · 이후 월 3,000원</p>` : `<button class="btn line mt16" id="resend">인증번호 다시 받기</button>`}
+    <p class="cap center mt24">시작하면 <a href="terms.html" style="color:var(--g500)">이용약관</a>과 <a href="privacy.html" style="color:var(--g500)">개인정보처리방침</a>에 동의한 것으로 봐요.<br>첫 주 무료 · 친구 초대 1명당 1주 연장(최대 5명) · 이후 월 3,000원</p>` : `<button class="btn line mt16" id="resend">인증번호 다시 받기</button>`}
   </div>`;
     $("#go").onclick = submit; if ($("#resend")) $("#resend").onclick = () => { step = "phone"; draw(); };
     ($("#otp") || $("#phone"))?.focus();
@@ -460,7 +460,7 @@ async function pageInvite(){
   const me = await api("me"); if (!me.ok) return;
   const inv = me.invite || { code: "-", used_count: 0, max_uses: 0 };
   const link = `${location.origin}${location.pathname}#/join?code=${inv.code}`;
-  const msg = `라밥 초대장 🍚\n관악 라이더끼리 제휴 식당에서 매끼 3,000원 할인받는 멤버십이에요. 초대받은 라이더만 가입할 수 있고, 첫 달 무료.\n초대 코드: ${inv.code}\n${link}`;
+  const msg = `라밥 초대장 🍚\n관악 라이더끼리 제휴 식당에서 매끼 3,000원 할인받는 멤버십이에요. 초대받은 라이더만 가입할 수 있고, 첫 주 무료. 친구 초대마다 1주 연장.\n초대 코드: ${inv.code}\n${link}`;
   app.innerHTML = `<div class="page">
     <h1 style="margin-top:28px">같이 뛰는 동료를<br>초대해 보세요</h1>
     <p class="sub">라밥은 초대받은 라이더만 가입할 수 있어요.<br>친구가 가입하면 내 무료 기간이 7일 늘어나요 (최대 5명, 35일).</p>
@@ -495,7 +495,7 @@ async function pageHistory(){
     <h2>멤버십</h2>
     <div class="sec">
       <div class="kv"><span class="k">번호</span><span class="v">${esc(me.phone_masked)}</span></div>
-      <div class="kv"><span class="k">상태</span><span class="v">${m?.live ? "이용 중 · 첫 달 무료" : "만료"}</span></div>
+      <div class="kv"><span class="k">상태</span><span class="v">${m?.live ? "이용 중 · 무료 기간" : "만료"}</span></div>
       <div class="kv"><span class="k">무료 기간</span><span class="v">${end ? `${end.getMonth()+1}월 ${end.getDate()}일까지` : "-"}</span></div>
       <div class="kv"><span class="k">이후 요금</span><span class="v">월 3,000원</span></div>
       <div class="kv"><span class="k">결제 카드</span><span class="v">${m?.card ? esc(m.card) : '<span style="color:var(--g400);font-weight:400">미등록</span>'}</span></div>
