@@ -228,7 +228,7 @@ async function pageHome(){
     if (v === "map") renderMap(window._stores);
   };
   $("#segList").onclick = () => setView("list"); $("#segMap").onclick = () => setView("map");
-  setView(localStorage.getItem("rabap_view") || "list");
+  setView(localStorage.getItem("rabap_view") || "map");
 }
 
 let map = null;
@@ -236,8 +236,8 @@ function renderMap(stores){
   const el = $("#map"); if (!el) return;
   if (map) { map.remove(); map = null; }
   map = L.map("map", { zoomControl: false, attributionControl: false }).setView([37.4784, 126.9516], 14);
-  L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", { maxZoom: 19, subdomains: "abcd" }).addTo(map);
-  L.control.attribution({ prefix: false }).addAttribution("© OpenStreetMap © CARTO").addTo(map);
+  L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19 }).addTo(map);
+  L.control.attribution({ prefix: false }).addAttribution("© OpenStreetMap").addTo(map);
   const pts = stores.filter(s => s.lat && s.lng);
   pts.forEach(s => {
     const icon = L.divIcon({ className: "", html: `<div class="pin ${s.open_now?"":"off"}"><span>🍚</span></div>`, iconSize: [34, 34], iconAnchor: [17, 34], popupAnchor: [0, -34] });
@@ -245,13 +245,18 @@ function renderMap(stores){
       .bindPopup(`<b>${esc(s.name)}</b><br><span style="color:#6B7684">${s.open_now ? "영업 중" : "영업시간 아님"} · -3,000원</span><br><a href="#/store/${s.id}">자세히 보기 ›</a>`);
   });
   if (pts.length) map.fitBounds(L.latLngBounds(pts.map(s => [s.lat, s.lng])).pad(0.3), { maxZoom: 16 });
+  let meMarker = null;
+  const locate = (quiet) => navigator.geolocation?.getCurrentPosition(p => {
+    const ll = [p.coords.latitude, p.coords.longitude]; window._me = ll;
+    if (meMarker) meMarker.remove();
+    meMarker = L.marker(ll, { icon: L.divIcon({ className: "", html: `<div class="me"></div>`, iconSize: [16, 16], iconAnchor: [8, 8] }), zIndexOffset: 1000 }).addTo(map);
+    if (pts.length) map.fitBounds(L.latLngBounds([ll, ...pts.map(s => [s.lat, s.lng])]).pad(0.25), { maxZoom: 16 }); else map.setView(ll, 15);
+  }, () => { if (!quiet) alert("위치 권한을 허용해 주세요"); }, { enableHighAccuracy: true, timeout: 8000, maximumAge: 60000 });
   const btn = document.createElement("button"); btn.className = "locbtn"; btn.textContent = "◎"; btn.title = "내 위치";
-  btn.onclick = () => navigator.geolocation?.getCurrentPosition(p => {
-    const ll = [p.coords.latitude, p.coords.longitude];
-    L.marker(ll, { icon: L.divIcon({ className: "", html: `<div class="me"></div>`, iconSize: [16, 16], iconAnchor: [8, 8] }) }).addTo(map);
-    map.setView(ll, 15);
-  }, () => alert("위치 권한을 허용해 주세요"), { enableHighAccuracy: true, timeout: 8000 });
+  btn.onclick = () => locate(false);
   el.appendChild(btn);
+  if (window._me) { const ll = window._me; meMarker = L.marker(ll, { icon: L.divIcon({ className: "", html: `<div class="me"></div>`, iconSize: [16, 16], iconAnchor: [8, 8] }), zIndexOffset: 1000 }).addTo(map); if (pts.length) map.fitBounds(L.latLngBounds([ll, ...pts.map(s => [s.lat, s.lng])]).pad(0.25), { maxZoom: 16 }); }
+  locate(true);
   setTimeout(() => map.invalidateSize(), 50);
 }
 
