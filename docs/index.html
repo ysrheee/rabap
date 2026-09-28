@@ -273,7 +273,7 @@ async function pageHome(){
     </div>
     <p class="mt16" style="padding:0 4px;font-size:15px;font-weight:600;color:var(--g800)">계산할 때 사장님께 라밥 멤버십 뱃지를 보여주세요</p>
     <p class="cap mt8" style="padding:0 4px">${hint}</p>
-    ${canUse ? `<button class="btn mt16" id="useBtn">이 식당에서 사용 (기록)</button><p class="cap center mt8">사장님께 카드를 보여주고 누르면 내역에 남아요</p>` : ""}
+    ${canUse ? `<button class="btn mt16" id="useBtn">사용 기록하고 3,000원 할인받기</button><p class="cap center mt8">식당을 고르면 확인 화면이 떠요. 그 화면을 사장님께 보여주세요</p>` : ""}
     ${banner}
     <h2>제휴 식당 <span class="cap" style="font-weight:500">${(st.stores||[]).length}</span></h2>
     <div class="seg"><button id="segList">목록</button><button id="segMap">지도</button></div>
@@ -372,7 +372,7 @@ async function pageStore(id){
     </div>
     <div style="height:88px"></div>
   </div>
-  <div class="cta"><button class="btn" id="useHere">이 식당에서 사용 (기록)</button></div>`;
+  <div class="cta"><button class="btn" id="useHere">사용 기록하고 3,000원 할인받기</button></div>`;
   $("#useHere").onclick = async () => { const b = $("#useHere"); b.disabled = true; const r = await api("redeem_at", { store_id: s.id }); b.disabled = false; showResult(r); };
 }
 
