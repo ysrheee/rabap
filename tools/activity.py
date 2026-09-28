@@ -1,9 +1,15 @@
 #!/usr/bin/env python3
 """라이더별 활동: 가입일 · 마지막 접속 · 접속 횟수(오늘/누적) · 할인 사용 횟수. KST 표시"""
-import datetime as dt
+import datetime as dt, re
 from common import rest
 KST=dt.timezone(dt.timedelta(hours=9))
-def k(ts): return dt.datetime.fromisoformat(ts.replace("Z","+00:00")).astimezone(KST)
+def fix_iso(ts):
+    ts=ts.replace("Z","+00:00")
+    m=re.match(r"(.*\.\d+)([+-]\d\d:\d\d)$", ts)
+    if m:  # 마이크로초 6자리로 맞춤
+        head,tz=m.groups(); base,frac=head.split("."); ts=f"{base}.{frac[:6].ljust(6,'0')}{tz}"
+    return ts
+def k(ts): return dt.datetime.fromisoformat(fix_iso(ts)).astimezone(KST)
 users=rest("users?select=id,phone,created_at&order=created_at")
 ev=rest("events?event=eq.app_open&select=user_id,created_at&order=created_at")
 rd=rest("redemptions?select=user_id,redeemed_at,stores(name)&order=redeemed_at")
