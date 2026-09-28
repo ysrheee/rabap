@@ -142,6 +142,7 @@ async function verify(b: { phone?: string; otp?: string; code?: string }) {
 }
 
 async function me(u: any) {
+  db.from("events").insert({ event: "app_open", user_id: u.id }).then(() => {}); // 접속 기록 (응답 대기 안 함)
   const now = kstNow(); const t = kstTime(now); const d = kstDate(now);
   const ws = await windows();
   const [m, today, inv, cnt] = await Promise.all([
