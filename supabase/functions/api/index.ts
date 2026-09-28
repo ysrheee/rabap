@@ -55,7 +55,9 @@ async function todayRedemption(userId: string, date: string) {
 async function membership(userId: string) {
   const { data } = await db.from("memberships").select("*").eq("user_id", userId).maybeSingle();
   if (!data) return null;
-  const live = (data.status === "active" || data.status === "past_due") && new Date(data.current_period_end) > new Date();
+  const end = new Date(data.current_period_end).getTime();
+  const live = (data.status === "active" || data.status === "canceled") ? end > Date.now()
+    : data.status === "past_due" ? end + 3 * 86400000 > Date.now() : false;
   return { ...data, live };
 }
 
@@ -151,7 +153,7 @@ async function me(u: any) {
   return json({
     ok: true,
     phone_masked: u.phone.slice(0, 3) + "-****-" + u.phone.slice(-4),
-    membership: m ? { status: m.status, live: m.live, period_end: m.current_period_end, price_krw: m.price_krw } : null,
+    membership: m ? { status: m.status, live: m.live, period_end: m.current_period_end, price_krw: m.price_krw, card: m.card_info || null, customer_key: m.customer_key || null } : null,
     windows: ws.map((w) => [w.start_time.slice(0, 5), w.end_time.slice(0, 5)]),
     in_window: windowNow(ws, t),
     next_window: nextWindow(ws, t),
@@ -225,11 +227,74 @@ async function history(u: any) {
   return json({ ok: true, items: (data ?? []).map((r: any) => ({ at: r.redeemed_at, krw: r.discount_krw, store: r.stores?.name })) });
 }
 
+
+// ---------- 결제 (토스페이먼츠 자동결제) ----------
+const TOSS = "https://api.tosspayments.com/v1";
+const tossAuth = () => "Basic " + btoa((Deno.env.get("TOSS_SECRET_KEY") || "") + ":");
+async function tossPost(path: string, body: unknown) {
+  const r = await fetch(TOSS + path, { method: "POST", headers: { Authorization: tossAuth(), "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  const j = await r.json().catch(() => ({})); return { ok: r.ok, j };
+}
+const PRICE = 1000;
+
+// 카드 등록 완료 콜백: authKey → billingKey
+async function billingIssue(u: any, b: { authKey?: string; customerKey?: string }) {
+  if (!b.authKey || !b.customerKey) return fail("카드 등록 정보가 없어요");
+  const m = await membership(u.id); if (!m) return fail("멤버십이 없어요");
+  if (m.customer_key && m.customer_key !== b.customerKey) return fail("고객 키가 일치하지 않아요");
+  const { ok, j } = await tossPost("/billing/authorizations/issue", { authKey: b.authKey, customerKey: b.customerKey });
+  if (!ok) return fail("카드 등록 실패: " + (j.message || j.code || "알 수 없는 오류"));
+  const card = j.card ? `${j.card.issuerCode ? "" : ""}${j.cardCompany || ""} **** ${(j.card.number || j.cardNumber || "").slice(-4)}`.trim() : (j.cardCompany || "카드");
+  await db.from("memberships").update({ billing_key: j.billingKey, customer_key: b.customerKey, card_info: card, status: "active", fail_count: 0 }).eq("id", m.id);
+  return json({ ok: true, card });
+}
+async function billingRemove(u: any) {
+  const m = await membership(u.id); if (!m) return fail("멤버십이 없어요");
+  await db.from("memberships").update({ billing_key: null, card_info: null }).eq("id", m.id);
+  return json({ ok: true });
+}
+async function cancelMembership(u: any) { // 해지 예약: 기간 끝까지 사용, 자동결제 중단
+  const m = await membership(u.id); if (!m) return fail("멤버십이 없어요");
+  await db.from("memberships").update({ status: "canceled", canceled_at: new Date().toISOString() }).eq("id", m.id);
+  return json({ ok: true, until: m.current_period_end });
+}
+async function resumeMembership(u: any) {
+  const m = await membership(u.id); if (!m) return fail("멤버십이 없어요");
+  await db.from("memberships").update({ status: "active", canceled_at: null }).eq("id", m.id);
+  return json({ ok: true });
+}
+
+// 일일 정산: 기간 만료 + 빌링키 있음 → 1,000원 결제 → 30일 연장. 실패 3회 → expired
+async function billingRun(req: Request) {
+  if (req.headers.get("x-cron-secret") !== Deno.env.get("CRON_SECRET")) return fail("forbidden", 403);
+  const now = new Date().toISOString();
+  const { data: due } = await db.from("memberships").select("*, users(phone)").lte("current_period_end", now).in("status", ["active", "past_due"]);
+  const out: any[] = [];
+  for (const m of due ?? []) {
+    if (!m.billing_key) { await db.from("memberships").update({ status: "expired" }).eq("id", m.id); out.push({ id: m.id, r: "expired_no_card" }); continue; }
+    const orderId = `rabap-${m.id.slice(0, 8)}-${Date.now()}`;
+    const { ok, j } = await tossPost(`/billing/${m.billing_key}`, { customerKey: m.customer_key, amount: PRICE, orderId, orderName: "라밥 멤버십 1개월", customerName: m.users?.phone });
+    if (ok) {
+      const base = Math.max(new Date(m.current_period_end).getTime(), Date.now());
+      await db.from("memberships").update({ status: "active", fail_count: 0, current_period_end: new Date(base + 30 * 86400000).toISOString() }).eq("id", m.id);
+      await db.from("payments").insert({ membership_id: m.id, amount_krw: PRICE, status: "paid", pg_payment_key: j.paymentKey, order_id: orderId });
+      out.push({ id: m.id, r: "paid" });
+    } else {
+      const fc = (m.fail_count ?? 0) + 1;
+      await db.from("memberships").update({ status: fc >= 3 ? "expired" : "past_due", fail_count: fc }).eq("id", m.id);
+      await db.from("payments").insert({ membership_id: m.id, amount_krw: PRICE, status: "failed", order_id: orderId, fail_reason: (j.message || j.code || "").slice(0, 200) });
+      out.push({ id: m.id, r: "failed", n: fc });
+    }
+  }
+  return json({ ok: true, processed: out.length, out });
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
   if (req.method !== "POST") return fail("POST only", 405);
   let b: any; try { b = await req.json(); } catch { return fail("bad json"); }
 
+  if (b.action === "billing_run") return billingRun(req);
   if (b.action === "start") return start(b);
   if (b.action === "verify") return verify(b);
   const u = await auth(b.token);
@@ -240,6 +305,10 @@ Deno.serve(async (req) => {
     case "redeem": return redeem(u, b);
     case "redeem_here": return redeemHere(u, b);
     case "history": return history(u);
+    case "billing_issue": return billingIssue(u, b);
+    case "billing_remove": return billingRemove(u);
+    case "cancel": return cancelMembership(u);
+    case "resume": return resumeMembership(u);
     default: return fail("unknown action", 404);
   }
 });
