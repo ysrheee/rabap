@@ -132,7 +132,7 @@ async function api(action, body={}){
   if (r.status === 401) { store.token = null; go("/join"); }
   return j;
 }
-function go(path){ location.hash = "#" + path; }
+function go(path){ if (location.hash === "#" + path) { render(); } else { location.hash = "#" + path; } }
 function route(){ const h = location.hash.replace(/^#/, "") || "/"; const [path, q] = h.split("?"); return { path, q: new URLSearchParams(q || "") }; }
 let scanner = null;
 async function stopScanner(){ if (scanner) { try { await scanner.stop(); scanner.clear(); } catch {} scanner = null; } }
