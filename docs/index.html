@@ -17,6 +17,7 @@
   --r:16px;--nav:64px;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{overflow-x:hidden}
 html,body{margin:0;background:#fff;color:var(--g900);font-family:"Pretendard Variable",Pretendard,-apple-system,"Apple SD Gothic Neo",system-ui,sans-serif;font-size:15px;line-height:1.5;letter-spacing:-.01em;-webkit-font-smoothing:antialiased}
 body{padding-bottom:calc(var(--nav) + env(safe-area-inset-bottom))}
 #app{max-width:480px;margin:0 auto;min-height:100vh}
@@ -51,9 +52,9 @@ p{margin:0}
 .chip.done{background:var(--brand-tint);color:var(--brand-press)}
 .chip .d{width:6px;height:6px;border-radius:50%;background:currentColor}
 .status{padding:24px 0 8px}
-.mcard{position:relative;overflow:hidden;border-radius:22px;padding:22px 20px;color:#fff;background:linear-gradient(120deg,#FF6B35,#FF8F5E 45%,#FFB08A);margin-top:8px}
-.mcard::after{content:"";position:absolute;inset:-60%;background:linear-gradient(115deg,transparent 40%,rgba(255,255,255,.35) 50%,transparent 60%);animation:sheen 2.6s linear infinite}
-@keyframes sheen{from{transform:translateX(-40%)}to{transform:translateX(40%)}}
+.mcard{position:relative;overflow:hidden;isolation:isolate;-webkit-mask-image:-webkit-radial-gradient(white,black);border-radius:22px;padding:22px 20px;color:#fff;background:linear-gradient(120deg,#FF6B35,#FF8F5E 45%,#FFB08A);margin-top:8px}
+.mcard::after{content:"";position:absolute;top:0;bottom:0;left:0;width:60%;background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.35) 50%,transparent 70%);animation:sheen 2.8s linear infinite;pointer-events:none}
+@keyframes sheen{from{transform:translateX(-100%)}to{transform:translateX(270%)}}
 .mcard>*{position:relative;z-index:1}
 .mcard .brand{font-weight:800;font-size:15px;letter-spacing:-.01em;opacity:.95}
 .mcard .who{font-size:22px;font-weight:800;margin-top:14px;letter-spacing:-.02em}
@@ -451,6 +452,7 @@ async function pageHistory(){
 // ---------- 라우터 ----------
 async function render(){
   await stopScanner();
+  window.scrollTo(0, 0);
   if (store.token && await handleBillingReturn()) { location.hash = "#/history"; }
   const { path, q } = route();
   if (path.startsWith("/s/")) {
