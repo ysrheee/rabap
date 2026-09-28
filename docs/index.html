@@ -462,11 +462,11 @@ async function pageInvite(){
   const msg = `라밥 초대장 🍚\n관악 라이더끼리 제휴 식당에서 매끼 3,000원 할인받는 멤버십이에요. 초대받은 라이더만 가입할 수 있고, 첫 달 무료.\n초대 코드: ${inv.code}\n${link}`;
   app.innerHTML = `<div class="page">
     <h1 style="margin-top:28px">같이 뛰는 동료를<br>초대해 보세요</h1>
-    <p class="sub">라밥은 초대받은 라이더만 가입할 수 있어요.<br>친구가 가입하면 내 무료 기간이 7일 늘어나요. ${inv.max_uses}명까지.</p>
+    <p class="sub">라밥은 초대받은 라이더만 가입할 수 있어요.<br>친구가 가입하면 내 무료 기간이 7일 늘어나요 (최대 5명, 35일).</p>
     <div class="sec mt24 center">
       <div class="cap">내 초대 코드</div>
       <div class="code">${esc(inv.code)}</div>
-      <div class="cap">${inv.used_count}명 가입 · +${inv.used_count * 7}일 받음 · ${Math.max(inv.max_uses - inv.used_count, 0)}자리 남음</div>
+      <div class="cap">${inv.used_count}명 가입 · +${Math.min(inv.used_count, 5) * 7}일 받음 · ${Math.max(inv.max_uses - inv.used_count, 0)}자리 남음</div>
     </div>
     <button class="btn mt16" id="share">${KAKAO_JS_KEY ? "카카오톡으로 초대하기" : "초대 링크 보내기"}</button>
     <button class="btn sub2 mt8" id="copy">링크 복사</button>

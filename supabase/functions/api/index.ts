@@ -75,7 +75,7 @@ async function createUser(phone: string, code: string) {
   await db.from("memberships").insert({ user_id: user.id, status: "active", price_krw: 0, current_period_end: end });
   const my = "R" + phone.slice(-4) + Math.random().toString(36).slice(2, 5).toUpperCase();
   await db.from("invites").insert({ code: my, issuer_id: user.id, max_uses: 5 });
-  if (inv.issuer_id) { // 초대 보상: 초대한 사람 무료 7일 연장
+  if (inv.issuer_id && inv.used_count < 5) { // 초대 보상: 초대한 사람 무료 7일 연장 (최대 5명 = 35일)
     const { data: im } = await db.from("memberships").select("id,current_period_end").eq("user_id", inv.issuer_id).maybeSingle();
     if (im) { const base = Math.max(new Date(im.current_period_end).getTime(), Date.now());
       await db.from("memberships").update({ current_period_end: new Date(base + 7 * 86400000).toISOString(), status: "active" }).eq("id", im.id); }
