@@ -2,7 +2,7 @@
 """매장 비치용 A4 안내문 생성 → notice.html (매장별 1장, 브라우저에서 인쇄)"""
 import html
 from common import rest, APP_URL
-stores = rest("stores?is_active=eq.true&select=name&order=name")
+stores = rest("stores?is_active=eq.true&select=name,min_order_krw&order=name")
 card = '''<div class="card"><div class="b">라밥 멤버십</div><div class="w">010-****-1234</div><div class="c">14:32:07</div><div class="d">2026.09.28 (월)</div><div class="p">● 지금 3,000원 할인 가능</div></div>'''
 pages = []
 for s in stores:
@@ -17,11 +17,11 @@ for s in stores:
       <ol>
         <li><b>시계가 움직이는지</b> 봐주세요. 캡처 화면은 시계가 멈춰 있어요.</li>
         <li>배지가 <b>"지금 3,000원 할인 가능"</b>(주황색)인지 봐주세요. 회색이면 할인 시간이 아니에요.</li>
-        <li>계산 금액에서 <b>3,000원을 빼주세요.</b> 1인 1일 1회예요.</li>
+        <li>주문 금액이 <b>{s["min_order_krw"]:,}원 이상</b>이면 <b>3,000원을 빼주세요.</b> 1인 1일 1회예요.</li>
       </ol>
     </div>
   </div>
-  <div class="time">할인 시간 &nbsp;14:00 ~ 17:00</div>
+  <div class="time">할인 시간 &nbsp;14:00 ~ 17:00 &nbsp;·&nbsp; {s["min_order_krw"]:,}원 이상 주문 시</div>
   <div class="foot">라밥은 관악구 라이더 전용 식사 멤버십이에요 · 문의 라밥 카카오톡 채널</div>
 </section>''')
 open("notice.html", "w").write(f'''<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>라밥 매장 안내문</title><style>

@@ -166,7 +166,7 @@ async function me(u: any) {
 
 async function stores(_u: any) {
   const now = kstNow(); const t = kstTime(now); const wd = kstWeekday(now);
-  const { data: list } = await db.from("stores").select("id,name,address,lat,lng,phone,menu_note,naver_url,discount_krw, store_hours(weekday,open_time,close_time)")
+  const { data: list } = await db.from("stores").select("id,name,address,lat,lng,phone,menu_note,naver_url,discount_krw,min_order_krw, store_hours(weekday,open_time,close_time)")
     .eq("is_active", true).order("name");
   const out = (list ?? []).map((s: any) => {
     const hours = (s.store_hours ?? []).filter((h: any) => h.weekday === wd)

@@ -207,7 +207,7 @@ function pageJoin(q){
     <button class="btn mt24" id="go">${step === "phone" ? "시작하기" : "확인"}</button>
     ${step === "phone" ? `<div class="sec" style="margin-top:28px">
       <div class="step"><b>1</b><span>초대 코드로 시작하면 첫 달 무료예요</span></div>
-      <div class="step"><b>2</b><span>할인 시간(14~17시)에 제휴 식당 방문</span></div>
+      <div class="step"><b>2</b><span>할인 시간(14~17시)에 제휴 식당에서 8,000원 이상 주문</span></div>
       <div class="step"><b>3</b><span>계산할 때 홈 화면의 멤버십 카드를 보여주면 끝</span></div>
     </div>
     <p class="cap center mt24">시작하면 <a href="privacy.html" style="color:var(--g500)">개인정보처리방침</a>에 동의한 것으로 봐요.<br>첫 달 무료, 이후 월 1,000원 (정가 3,000원)</p>` : `<button class="btn line mt16" id="resend">인증번호 다시 받기</button>`}
@@ -246,8 +246,8 @@ async function pageHome(){
   let cls = "", pill = "", hint = "";
   if (me.used_today) { cls = "done"; pill = "오늘 할인 사용함"; hint = `${esc(me.used_today.store)}에서 사용 · 내일 14:00부터 다시`; }
   else if (!me.membership?.live) { cls = "off"; pill = "멤버십 만료"; hint = "내역 탭에서 결제수단을 확인해 주세요"; }
-  else if (me.in_window) { cls = ""; pill = "● 지금 3,000원 할인 가능"; hint = "할인 시간 14:00~17:00 · 하루 1회"; }
-  else { cls = "off"; pill = me.next_window ? `${me.next_window}부터 할인 가능` : "오늘 할인 시간 종료"; hint = "할인 시간 14:00~17:00"; }
+  else if (me.in_window) { cls = ""; pill = "● 지금 3,000원 할인 가능"; hint = "할인 시간 14:00~17:00 · 8,000원 이상 주문 시 · 하루 1회"; }
+  else { cls = "off"; pill = me.next_window ? `${me.next_window}부터 할인 가능` : "오늘 할인 시간 종료"; hint = "할인 시간 14:00~17:00 · 8,000원 이상 주문 시"; }
   const canUse = me.membership?.live && me.in_window && !me.used_today;
   const daysLeft = me.membership ? Math.ceil((new Date(me.membership.period_end) - Date.now()) / 86400000) : 99;
   const banner = me.membership?.live && !me.membership.card && me.membership.status !== "canceled" && daysLeft <= 7
@@ -256,7 +256,7 @@ async function pageHome(){
       <div class="ic ${s.open_now?"on":""}">🍚</div>
       <div class="t"><div class="n">${esc(s.name)}</div>
       <div class="m">${s.open_now ? "영업 중" : "영업시간 아님"}${s.menu_note ? " · " + esc(s.menu_note) : ""}</div></div>
-      <div class="r">3,000원 할인</div><span class="chev">${ICON.chev}</span></a>`).join("");
+      <div style="text-align:right;flex:none"><div class="r">3,000원 할인</div><div class="cap" style="font-size:11px">${won(s.min_order_krw || 8000)} 이상</div></div><span class="chev">${ICON.chev}</span></a>`).join("");
   app.innerHTML = `<div class="page">
     <div class="mcard ${cls}">
       <div class="brand">라밥 멤버십</div>
@@ -318,7 +318,7 @@ function renderMap(stores){
   pts.forEach(s => {
     const icon = L.divIcon({ className: "", html: `<div class="pin ${s.open_now?"":"off"}"><span>🍚</span></div>`, iconSize: [34, 34], iconAnchor: [17, 34], popupAnchor: [0, -34] });
     L.marker([s.lat, s.lng], { icon }).addTo(map)
-      .bindPopup(`<b>${esc(s.name)}</b><br><span style="color:#6B7684">${s.open_now ? "영업 중" : "영업시간 아님"} · 3,000원 할인</span><br><a href="#/store/${s.id}">자세히 보기 ›</a>`);
+      .bindPopup(`<b>${esc(s.name)}</b><br><span style="color:#6B7684">${s.open_now ? "영업 중" : "영업시간 아님"} · 3,000원 할인 (${won(s.min_order_krw || 8000)} 이상)</span><br><a href="#/store/${s.id}">자세히 보기 ›</a>`);
   });
   if (pts.length) map.fitBounds(L.latLngBounds(pts.map(s => [s.lat, s.lng])).pad(0.3), { maxZoom: 16 });
   let meMarker = null;
@@ -348,6 +348,7 @@ async function pageStore(id){
     <p class="sub">${esc(s.address)}</p>
     <div class="sec mt24">
       <div class="kv"><span class="k">라밥 할인</span><span class="v" style="color:var(--brand)">${won(s.discount_krw)}</span></div>
+      <div class="kv"><span class="k">조건</span><span class="v">${won(s.min_order_krw || 8000)} 이상 주문 시</span></div>
       <div class="kv"><span class="k">대표 메뉴</span><span class="v">${esc(s.menu_note || "-")}</span></div>
       <div class="kv"><span class="k">오늘 영업</span><span class="v">${s.today_hours.length ? s.today_hours.map(h=>h.join("~")).join("<br>") : "휴무"}</span></div>
       <div class="kv"><span class="k">할인 시간</span><span class="v">14:00~17:00</span></div>
