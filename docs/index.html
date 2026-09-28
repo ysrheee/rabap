@@ -265,7 +265,7 @@ async function pageHome(){
   if (!me.ok) return;
   const d = new Date(); const dateStr = `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,"0")}.${String(d.getDate()).padStart(2,"0")} (${"일월화수목금토"[d.getDay()]})`;
   let cls = "", pill = "", hint = "";
-  if (me.used_today) { cls = "done"; pill = "오늘 할인 사용함"; hint = `${esc(me.used_today.store)}에서 사용 · 내일 14:00부터 다시`; }
+  if (me.used_today) { cls = "done"; pill = "내일 다시 사용 가능"; hint = `오늘 ${esc(me.used_today.store)}에서 사용했어요 · 내일 14:00부터`; }
   else if (!me.membership?.live) { cls = "off"; pill = "멤버십 만료"; hint = "내역 탭에서 결제수단을 확인해 주세요"; }
   else if (me.in_window) { cls = ""; pill = "● 지금 3,000원 할인 가능"; hint = "할인 시간 14:00~17:00 · 8,000원 이상 주문 시 · 하루 1회"; }
   else { cls = "off"; pill = me.next_window ? `${me.next_window}부터 할인 가능` : "오늘 할인 시간 종료"; hint = "할인 시간 14:00~17:00 · 8,000원 이상 주문 시"; }
@@ -286,7 +286,7 @@ async function pageHome(){
       <div class="date">${dateStr}</div>
       <div class="pill">${pill}</div>
     </div>
-    <p class="mt16" style="padding:0 4px;font-size:15px;font-weight:600;color:var(--g800)">계산할 때 사장님께 라밥 멤버십 뱃지를 보여주세요</p>
+    <p class="mt16" style="padding:0 4px;font-size:15px;font-weight:600;color:var(--g800)">${me.used_today ? "오늘 할인은 사용 완료" : !me.membership?.live ? "멤버십을 다시 시작해 주세요" : me.in_window ? "계산할 때 사장님께 라밥 멤버십 뱃지를 보여주세요" : "할인 시간에 사장님께 라밥 멤버십 뱃지를 보여주세요"}</p>
     <p class="cap mt8" style="padding:0 4px">${hint}</p>
     ${canUse ? `<button class="btn mt16" id="useBtn">사용 기록하고 3,000원 할인받기</button><p class="cap center mt8">식당을 고르면 확인 화면이 떠요. 그 화면을 사장님께 보여주세요</p>` : ""}
     ${banner}
