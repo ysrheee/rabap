@@ -73,6 +73,11 @@ async function createUser(phone: string, code: string) {
   await db.from("memberships").insert({ user_id: user.id, status: "active", price_krw: 0, current_period_end: end });
   const my = "R" + phone.slice(-4) + Math.random().toString(36).slice(2, 5).toUpperCase();
   await db.from("invites").insert({ code: my, issuer_id: user.id, max_uses: 5 });
+  if (inv.issuer_id) { // 초대 보상: 초대한 사람 무료 7일 연장
+    const { data: im } = await db.from("memberships").select("id,current_period_end").eq("user_id", inv.issuer_id).maybeSingle();
+    if (im) { const base = Math.max(new Date(im.current_period_end).getTime(), Date.now());
+      await db.from("memberships").update({ current_period_end: new Date(base + 7 * 86400000).toISOString(), status: "active" }).eq("id", im.id); }
+  }
   return json({ ok: true, token: user.token });
 }
 
@@ -171,36 +176,47 @@ async function stores(_u: any) {
   return json({ ok: true, stores: out });
 }
 
-async function redeem(u: any, b: { secret?: string }) {
-  const raw = (b.secret || "").trim();
-  const secret = raw.split("/").pop()!.split("?")[0]; // URL이 와도 마지막 세그먼트만
-  if (!secret) return fail("QR을 인식하지 못했습니다");
+function distM(a: number, b: number, c: number, d: number) {
+  const R = 6371000, p = Math.PI / 180, dLat = (c - a) * p, dLng = (d - b) * p;
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(a * p) * Math.cos(c * p) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(h));
+}
+const STORE_SEL = "id,name,lat,lng,discount_krw,is_active, store_hours(weekday,open_time,close_time)";
 
+async function judgeAndRedeem(u: any, s: any) {
   const now = kstNow(); const t = kstTime(now); const d = kstDate(now); const wd = kstWeekday(now);
-
   const m = await membership(u.id);
-  if (!m?.live) return fail("멤버십이 만료되었습니다");
-
+  if (!m?.live) return fail("멤버십이 만료되었어요");
   const ws = await windows();
-  if (!windowNow(ws, t)) {
-    const n = nextWindow(ws, t);
-    return fail(n ? `지금은 할인 시간이 아니에요. ${n}부터 가능` : "오늘 할인 시간이 끝났어요. 내일 14:00부터");
-  }
-
-  const { data: s } = await db.from("stores").select("id,name,discount_krw,is_active, store_hours(weekday,open_time,close_time)")
-    .eq("qr_secret", secret).maybeSingle();
-  if (!s || !s.is_active) return fail("등록되지 않은 매장 QR입니다");
+  if (!windowNow(ws, t)) { const n = nextWindow(ws, t); return fail(n ? `지금은 할인 시간이 아니에요. ${n}부터 가능` : "오늘 할인 시간이 끝났어요. 내일 14:00부터"); }
+  if (!s || !s.is_active) return fail("등록되지 않은 매장이에요");
   const open = (s.store_hours ?? []).some((h: any) => h.weekday === wd && inRange(t, h.open_time, h.close_time));
   if (!open) return fail(`${s.name}은(는) 지금 영업시간이 아니에요`);
-
-  const today = await todayRedemption(u.id, d);
-  if (today) return fail("오늘은 이미 사용했어요. 하루 1회만 가능");
-
+  if (await todayRedemption(u.id, d)) return fail("오늘은 이미 사용했어요. 하루 1회만 가능");
   const { data: r, error } = await db.from("redemptions")
     .insert({ user_id: u.id, store_id: s.id, discount_krw: s.discount_krw, redeemed_date: d }).select().single();
   if (error) return fail(error.code === "23505" ? "오늘은 이미 사용했어요. 하루 1회만 가능" : "처리 오류: " + error.message, 500);
-
   return json({ ok: true, store: s.name, discount_krw: s.discount_krw, at: r.redeemed_at, now: t.slice(0, 5) });
+}
+
+// QR 방식
+async function redeem(u: any, b: { secret?: string }) {
+  const secret = (b.secret || "").trim().split("/").pop()!.split("?")[0];
+  if (!secret) return fail("QR을 인식하지 못했어요");
+  const { data: s } = await db.from("stores").select(STORE_SEL).eq("qr_secret", secret).maybeSingle();
+  return judgeAndRedeem(u, s);
+}
+
+// 위치 방식: 매장 150m 이내
+async function redeemHere(u: any, b: { store_id?: string; lat?: number; lng?: number; accuracy?: number }) {
+  if (!b.store_id || typeof b.lat !== "number" || typeof b.lng !== "number") return fail("위치를 확인할 수 없어요. 위치 권한을 허용해 주세요");
+  if ((b.accuracy ?? 0) > 400) return fail("위치가 정확하지 않아요. 실외에서 다시 시도하거나 QR을 찍어주세요");
+  const { data: s } = await db.from("stores").select(STORE_SEL).eq("id", b.store_id).maybeSingle();
+  if (!s) return fail("등록되지 않은 매장이에요");
+  if (s.lat == null || s.lng == null) return fail("이 매장은 QR로만 사용할 수 있어요");
+  const dist = distM(b.lat, b.lng, s.lat, s.lng);
+  if (dist > 150 + Math.min(b.accuracy ?? 0, 100)) return fail(`매장에서 ${Math.round(dist)}m 떨어져 있어요. 매장 앞에서 눌러주세요`);
+  return judgeAndRedeem(u, s);
 }
 
 async function history(u: any) {
@@ -222,6 +238,7 @@ Deno.serve(async (req) => {
     case "me": return me(u);
     case "stores": return stores(u);
     case "redeem": return redeem(u, b);
+    case "redeem_here": return redeemHere(u, b);
     case "history": return history(u);
     default: return fail("unknown action", 404);
   }
