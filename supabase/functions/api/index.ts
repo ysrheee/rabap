@@ -231,6 +231,16 @@ async function redeemHere(u: any, b: { store_id?: string; lat?: number; lng?: nu
   return judgeAndRedeem(u, s);
 }
 
+// 60초 안에만 되돌리기
+async function undo(u: any) {
+  const d = kstDate(kstNow());
+  const { data: r } = await db.from("redemptions").select("id, redeemed_at").eq("user_id", u.id).eq("redeemed_date", d).maybeSingle();
+  if (!r) return fail("오늘 사용 기록이 없어요");
+  if (Date.now() - new Date(r.redeemed_at).getTime() > 60_000) return fail("60초가 지나 되돌릴 수 없어요");
+  await db.from("redemptions").delete().eq("id", r.id);
+  return json({ ok: true });
+}
+
 async function history(u: any) {
   const { data } = await db.from("redemptions").select("redeemed_at, discount_krw, stores(name)")
     .eq("user_id", u.id).order("redeemed_at", { ascending: false }).limit(60);
@@ -321,6 +331,7 @@ Deno.serve(async (req) => {
     case "redeem_here": return redeemHere(u, b);
     case "redeem_at": return redeemAt(u, b);
     case "history": return history(u);
+    case "undo": return undo(u);
     case "billing_issue": return billingIssue(u, b);
     case "billing_remove": return billingRemove(u);
     case "cancel": return cancelMembership(u);

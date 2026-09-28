@@ -107,6 +107,10 @@ p{margin:0}
 .result .meta{display:flex;gap:8px;justify-content:center;margin-top:14px;flex-wrap:wrap}
 .result .meta span{background:var(--g100);border-radius:10px;padding:8px 12px;font-size:13px;font-weight:700;color:var(--g800)}
 .result .meta b{color:var(--brand)}
+.undo{margin-top:10px;font-size:13px;color:var(--g500);text-decoration:underline;background:none;border:0;font-family:inherit;cursor:pointer}
+.confirm .box h3{font-size:19px;margin-bottom:4px}
+.confirm .dist{display:inline-block;margin:6px 0 14px;font-size:13px;font-weight:700;border-radius:8px;padding:5px 10px;background:var(--g100);color:var(--g700)}
+.confirm .dist.far{background:var(--red-tint);color:var(--red)}
 .result .amt{font-size:40px;font-weight:800;letter-spacing:-.03em;color:var(--g900);line-height:1.1}
 .result .st{font-size:22px;font-weight:700;margin-top:10px}
 .result .tm{font-size:15px;color:var(--g600);margin-top:8px;line-height:1.5}
@@ -304,6 +308,29 @@ async function pageHome(){
   const use = $("#useBtn"); if (use) use.onclick = () => pickStoreAndUse(window._stores);
 }
 
+// 확인 시트: 정말 지금 계산하는지
+function confirmUse(store, distM){
+  return new Promise(res => {
+    const el = document.createElement("div"); el.className = "sheet confirm";
+    const far = distM != null && distM > 300;
+    el.innerHTML = `<div class="box"><h3>${esc(store.name)}에서<br>지금 계산하나요?</h3>
+      ${distM != null ? `<span class="dist ${far?"far":""}">${far ? "⚠ " : ""}식당까지 약 ${Math.round(distM)}m${far ? " · 식당 앞이 맞는지 확인해 주세요" : ""}</span>` : `<span class="dist">위치를 확인할 수 없어요 · 식당 앞에서 눌러주세요</span>`}
+      <p class="sub">하루 1회라 되돌리기 어려워요. 사장님께 보여드리기 직전에 눌러주세요.</p>
+      <button class="btn mt16" id="yes">네, 지금 계산해요</button><button class="btn sub2 mt8" id="no">아니요</button></div>`;
+    document.body.appendChild(el);
+    const done = (v) => { el.remove(); res(v); };
+    el.querySelector("#yes").onclick = () => done(true); el.querySelector("#no").onclick = () => done(false);
+    el.onclick = (e) => { if (e.target === el) done(false); };
+  });
+}
+function getPos(){ return new Promise(r => { if (!navigator.geolocation) return r(null); navigator.geolocation.getCurrentPosition(p => r([p.coords.latitude, p.coords.longitude]), () => r(null), { enableHighAccuracy: true, timeout: 5000, maximumAge: 60000 }); }); }
+async function useAt(store, me){
+  if (!me) me = await getPos();
+  const d = (me && store.lat && store.lng) ? L.latLng(me).distanceTo([store.lat, store.lng]) : null;
+  if (!(await confirmUse(store, d))) return;
+  const r = await api("redeem_at", { store_id: store.id }); showResult(r);
+}
+
 // 가까운 식당 자동 선택 → 확인 시트 → 기록
 function pickStoreAndUse(stores){
   const open = stores.filter(s => s.open_now);
@@ -313,12 +340,12 @@ function pickStoreAndUse(stores){
     document.body.appendChild(el);
     el.onclick = (e) => { if (e.target === el) el.remove(); };
     el.querySelector("#closeSheet").onclick = () => el.remove();
-    el.querySelectorAll("[data-id]").forEach(a => a.onclick = async () => { el.remove(); const r = await api("redeem_at", { store_id: a.dataset.id }); showResult(r); });
+    el.querySelectorAll("[data-id]").forEach(a => a.onclick = async () => { el.remove(); const st = sorted.find(x => x.id === a.dataset.id); useAt(st, window._me || null); });
   };
   const list = open.length ? open : stores;
   if (!navigator.geolocation) return show(list, "식당을 선택하세요");
   navigator.geolocation.getCurrentPosition(p => {
-    const me = [p.coords.latitude, p.coords.longitude];
+    const me = [p.coords.latitude, p.coords.longitude]; window._me = me;
     const withD = list.map(s => ({ ...s, _d: (s.lat && s.lng) ? L.latLng(me).distanceTo([s.lat, s.lng]) : null })).sort((a, b) => (a._d ?? 1e9) - (b._d ?? 1e9));
     show(withD, "가까운 순이에요");
   }, () => show(list, "식당을 선택하세요"), { enableHighAccuracy: true, timeout: 5000, maximumAge: 60000 });
@@ -384,7 +411,7 @@ async function pageStore(id){
     <div style="height:88px"></div>
   </div>
   <div class="cta"><button class="btn" id="useHere">사용 기록하고 3,000원 할인받기</button></div>`;
-  $("#useHere").onclick = async () => { const b = $("#useHere"); b.disabled = true; const r = await api("redeem_at", { store_id: s.id }); b.disabled = false; showResult(r); };
+  $("#useHere").onclick = async () => { const b = $("#useHere"); b.disabled = true; await useAt(s, null); b.disabled = false; };
 }
 
 function showResult(r){
@@ -395,13 +422,14 @@ function showResult(r){
       <div class="amt" style="margin-top:6px">-${won(r.discount_krw)}</div><div class="st">${esc(r.store)}</div>
       <div class="meta"><span>오늘 이 식당 <b>${r.seq || 1}번째</b> 사용</span><span>사용번호 <b>${esc(r.code || "")}</b></span></div>
       <div class="show">계산 금액에서 3,000원 빼주세요</div>
-      <div class="cnt"><span id="c">30</span>초 후 자동으로 닫혀요</div><button class="btn">확인</button>`;
+      <div class="cnt"><span id="c">30</span>초 후 자동으로 닫혀요</div><button class="undo" id="undo">잘못 눌렀어요 (60초 안에만 취소돼요)</button><button class="btn">확인</button>`;
   } else {
     el.innerHTML = `<div class="mark bad">${ICON.x}</div><div class="st">할인을 적용할 수 없어요</div><div class="tm">${esc(r.reason)}</div><button class="btn sub2">확인</button>`;
   }
   document.body.appendChild(el);
   const close = () => { el.remove(); if (t) clearInterval(t); go("/"); };
   el.querySelector(".btn").onclick = close;
+  const u = el.querySelector("#undo"); if (u) u.onclick = async () => { u.disabled = true; const x = await api("undo"); toast(x.ok ? "취소됐어요. 오늘 다시 쓸 수 있어요" : x.reason); if (x.ok) close(); else u.disabled = false; };
   const tick = () => { const l = el.querySelector("#live"); if (l) { const d = new Date(); l.textContent = `${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}:${String(d.getSeconds()).padStart(2,"0")}`; } };
   tick();
   let n = 30; const t = r.ok ? setInterval(() => { n--; tick(); const c = el.querySelector("#c"); if (c) c.textContent = n; if (n <= 0) close(); }, 1000) : null;
