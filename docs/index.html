@@ -501,7 +501,7 @@ async function pageHistory(){
     <div class="sec">
       <div class="kv"><span class="k">번호</span><span class="v">${esc(me.phone_masked)}</span></div>
       <div class="kv"><span class="k">상태</span><span class="v">${m?.status === "past_due" ? '<span style="color:var(--red)">결제 실패 · 결제수단을 확인해 주세요</span>' : m?.live ? (m.card ? "이용 중" : "이용 중 · 무료 기간") : "만료"}</span></div>
-      <div class="kv"><span class="k">무료 기간</span><span class="v">${end ? `${end.getMonth()+1}월 ${end.getDate()}일까지` : "-"}</span></div>
+      <div class="kv"><span class="k">무료 기간</span><span class="v">${end ? `${end.getMonth()+1}월 ${end.getDate()}일까지` : "-"}${me.invite && me.invite.used_count ? `<div class="cap" style="font-weight:400">초대 ${me.invite.used_count}명 · +${Math.min(me.invite.used_count,5)*7}일 연장됨</div>` : `<div class="cap" style="font-weight:400"><a href="#/invite" style="color:var(--brand)">친구 초대하면 1명당 +7일</a></div>`}</span></div>
       <div class="kv"><span class="k">이후 요금</span><span class="v">월 3,000원</span></div>
       <div class="kv"><span class="k">결제 카드</span><span class="v">${m?.card ? esc(m.card) : '<span style="color:var(--g400);font-weight:400">미등록</span>'}</span></div>
     </div>
