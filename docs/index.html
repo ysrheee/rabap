@@ -312,8 +312,8 @@ function renderMap(stores){
   const el = $("#map"); if (!el) return;
   if (map) { map.remove(); map = null; }
   map = L.map("map", { zoomControl: false, attributionControl: false }).setView([37.4784, 126.9516], 14);
-  const ESRI = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}";
-  const useEsri = () => { L.tileLayer(ESRI, { maxZoom: 19 }).addTo(map); L.control.attribution({ prefix: false }).addAttribution("© Esri").addTo(map); };
+  const ESRI = "https://tile.openstreetmap.de/{z}/{x}/{y}.png";
+  const useEsri = () => { L.tileLayer(ESRI, { maxZoom: 19 }).addTo(map); L.control.attribution({ prefix: false }).addAttribution("© OpenStreetMap").addTo(map); };
   if (window._tileOk === false) useEsri();
   else {
     const osm = L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19 }).addTo(map);
