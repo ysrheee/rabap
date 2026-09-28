@@ -96,6 +96,10 @@ p{margin:0}
 .mark.bad{background:var(--g100)}
 .mark svg{width:44px;height:44px;stroke:#fff;fill:none;stroke-width:3.2;stroke-linecap:round;stroke-linejoin:round}
 .mark.bad svg{stroke:var(--g600)}
+.minicard{display:inline-flex;align-items:center;gap:10px;background:linear-gradient(120deg,var(--brand),#FF8F5E);color:#fff;border-radius:14px;padding:10px 16px;margin-bottom:22px;box-shadow:0 4px 14px rgba(255,107,53,.3)}
+.minicard .b{font-size:12px;font-weight:800;opacity:.95;letter-spacing:-.01em}
+.minicard .p{font-size:17px;font-weight:800;font-variant-numeric:tabular-nums}
+.minicard .v{font-size:11px;background:rgba(255,255,255,.25);border-radius:999px;padding:3px 8px;font-weight:700}
 .result .amt{font-size:40px;font-weight:800;letter-spacing:-.03em;color:var(--g900);line-height:1.1}
 .result .st{font-size:22px;font-weight:700;margin-top:10px}
 .result .tm{font-size:15px;color:var(--g600);margin-top:8px;line-height:1.5}
@@ -379,7 +383,7 @@ async function pageStore(id){
 function showResult(r){
   const el = document.createElement("div"); el.className = "result";
   if (r.ok) {
-    el.innerHTML = `<div class="mark ok">${ICON.check}</div><div class="amt">-${won(r.discount_krw)}</div><div class="st">${esc(r.store)}</div>
+    el.innerHTML = `<div class="minicard"><span class="b">라밥 멤버십</span><span class="p">${esc(r.phone_masked || "")}</span><span class="v">회원</span></div><div class="mark ok">${ICON.check}</div><div class="amt">-${won(r.discount_krw)}</div><div class="st">${esc(r.store)}</div>
       <div class="tm">할인 적용 완료 · <span id="live" style="font-variant-numeric:tabular-nums;font-weight:600;color:var(--g900)"></span></div>
       <div class="show">사장님께 이 화면을 보여주세요</div>
       <div class="cnt"><span id="c">30</span>초 후 자동으로 닫혀요</div><button class="btn">확인</button>`;
