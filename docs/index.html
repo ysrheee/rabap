@@ -119,6 +119,9 @@ p{margin:0}
 .pin{width:34px;height:34px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:var(--brand);border:3px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.25);display:flex;align-items:center;justify-content:center}
 .pin.off{background:var(--g400)}
 .pin span{transform:rotate(45deg);font-size:15px}
+.pinwrap{position:relative;width:34px;height:34px}
+.pinlbl{position:absolute;top:36px;left:50%;transform:translateX(-50%);white-space:nowrap;background:#fff;color:var(--g900);font-size:12px;font-weight:700;padding:3px 8px;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,.2);pointer-events:none;letter-spacing:-.01em}
+.pinlbl.off{color:var(--g500)}
 .me{width:16px;height:16px;border-radius:50%;background:#3182F6;border:3px solid #fff;box-shadow:0 0 0 6px rgba(49,130,246,.2)}
 .leaflet-popup-content-wrapper{border-radius:14px;box-shadow:0 4px 16px rgba(0,0,0,.12);font-family:inherit}
 .leaflet-popup-content{margin:12px 14px;font-size:14px;line-height:1.4}
@@ -325,7 +328,8 @@ function renderMap(stores){
   }
   const pts = stores.filter(s => s.lat && s.lng);
   pts.forEach(s => {
-    const icon = L.divIcon({ className: "", html: `<div class="pin ${s.open_now?"":"off"}"><span>🍚</span></div>`, iconSize: [34, 34], iconAnchor: [17, 34], popupAnchor: [0, -34] });
+    const short = s.name.replace(/\s*(서울대입구역?점|봉천점|신림점|낙성대점|관악점|관악본점|본점)$/, "");
+    const icon = L.divIcon({ className: "", html: `<div class="pinwrap"><div class="pin ${s.open_now?"":"off"}"><span>🍚</span></div><div class="pinlbl ${s.open_now?"":"off"}">${esc(short)}</div></div>`, iconSize: [34, 34], iconAnchor: [17, 34], popupAnchor: [0, -34] });
     L.marker([s.lat, s.lng], { icon }).addTo(map)
       .bindPopup(`<b>${esc(s.name)}</b><br><span style="color:#6B7684">${s.open_now ? "영업 중" : "영업시간 아님"} · 3,000원 할인 (${won(s.min_order_krw || 8000)} 이상)</span><br><a href="#/store/${s.id}">자세히 보기 ›</a>`);
   });
