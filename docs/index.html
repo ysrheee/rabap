@@ -289,6 +289,8 @@ async function pageHome(){
     <p class="cap mt8" style="padding:0 4px">${hint}</p>
     ${canUse ? `<button class="btn mt16" id="useBtn">사용 기록하고 3,000원 할인받기</button><p class="cap center mt8">계산 직전에 누르고, 확인 화면을 사장님께 보여주세요</p>` : ""}
     ${!me.membership?.live ? `<a class="btn mt16" href="#/invite">친구 초대하고 1주 더 쓰기</a><a class="btn sub2 mt8" href="#/history">월 3,000원으로 계속하기</a>` : ""}
+    ${me.membership?.status === "past_due" ? `<a class="sec" href="#/history" style="display:flex;align-items:center;gap:12px;text-decoration:none;color:inherit;padding:14px 16px;background:var(--red-tint)"><div class="ic">⚠️</div><div style="flex:1"><div style="font-weight:700;color:var(--red)">결제에 실패했어요</div><div class="cap">3일 안에 결제수단을 확인하지 않으면 멤버십이 종료돼요</div></div><span class="chev">${ICON.chev}</span></a>` : ""}
+    ${(() => { const standalone = window.matchMedia("(display-mode: standalone)").matches || navigator.standalone; if (standalone || localStorage.getItem("rabap_a2hs")) return ""; const ios = /iPhone|iPad/.test(navigator.userAgent); return `<div class="sec" style="display:flex;align-items:center;gap:12px;padding:12px 16px;margin-top:12px"><div class="ic">📲</div><div style="flex:1;font-size:13px;color:var(--g700)">앱처럼 쓰려면 <b>${ios ? "공유 버튼 → 홈 화면에 추가" : "메뉴(⋮) → 홈 화면에 추가"}</b></div><button id="a2hsClose" style="border:0;background:none;color:var(--g400);font-size:18px">×</button></div>`; })()}
     ${banner}
     <h2>제휴 식당 <span class="cap" style="font-weight:500">${(st.stores||[]).length}</span></h2>
     <div class="seg"><button id="segList">목록</button><button id="segMap">지도</button></div>
@@ -305,6 +307,7 @@ async function pageHome(){
   $("#segList").onclick = () => setView("list"); $("#segMap").onclick = () => setView("map");
   setView("map");
   const use = $("#useBtn"); if (use) use.onclick = () => pickStoreAndUse(window._stores);
+  const a2 = $("#a2hsClose"); if (a2) a2.onclick = (e) => { localStorage.setItem("rabap_a2hs", "1"); e.target.closest(".sec").remove(); };
 }
 
 // 확인 시트: 정말 지금 계산하는지
@@ -496,7 +499,7 @@ async function pageHistory(){
     <h2>멤버십</h2>
     <div class="sec">
       <div class="kv"><span class="k">번호</span><span class="v">${esc(me.phone_masked)}</span></div>
-      <div class="kv"><span class="k">상태</span><span class="v">${m?.live ? "이용 중 · 무료 기간" : "만료"}</span></div>
+      <div class="kv"><span class="k">상태</span><span class="v">${m?.status === "past_due" ? '<span style="color:var(--red)">결제 실패 · 결제수단을 확인해 주세요</span>' : m?.live ? (m.card ? "이용 중" : "이용 중 · 무료 기간") : "만료"}</span></div>
       <div class="kv"><span class="k">무료 기간</span><span class="v">${end ? `${end.getMonth()+1}월 ${end.getDate()}일까지` : "-"}</span></div>
       <div class="kv"><span class="k">이후 요금</span><span class="v">월 3,000원</span></div>
       <div class="kv"><span class="k">결제 카드</span><span class="v">${m?.card ? esc(m.card) : '<span style="color:var(--g400);font-weight:400">미등록</span>'}</span></div>

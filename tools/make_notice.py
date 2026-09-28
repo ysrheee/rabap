@@ -1,8 +1,17 @@
 #!/usr/bin/env python3
 """매장 비치용 A4 안내문 생성 → notice.html (매장별 1장, 브라우저에서 인쇄)"""
-import html
+import html, base64, io, re, qrcode
 from common import rest, APP_URL
-stores = rest("stores?is_active=eq.true&select=name,min_order_krw&order=name")
+stores = rest("stores?is_active=eq.true&select=id,name,min_order_krw&order=name")
+# 매장별 초대 코드 발급(없으면 생성): S + 매장 id 앞 6자리 대문자, 500명 한도
+codes = {}
+for s in stores:
+    code = "S" + s["id"].replace("-", "")[:6].upper()
+    if not rest(f"invites?code=eq.{code}&select=code"):
+        rest("invites", "POST", {"code": code, "issuer_id": None, "max_uses": 500})
+    codes[s["id"]] = code
+def qr_b64(url):
+    img = qrcode.make(url, box_size=8, border=2); buf = io.BytesIO(); img.save(buf, format="PNG"); return base64.b64encode(buf.getvalue()).decode()
 card = '''<div class="card"><div class="b">라밥 멤버십</div><div class="w">010-****-1234</div><div class="c">14:32:07</div><div class="d">2026.09.28 (월)</div><div class="p">● 지금 3,000원 할인 가능</div></div>'''
 pages = []
 for s in stores:
@@ -22,7 +31,8 @@ for s in stores:
     </div>
   </div>
   <div class="time">할인 시간 &nbsp;14:00 ~ 17:00 &nbsp;·&nbsp; {s["min_order_krw"]:,}원 이상 주문 시</div>
-  <div class="foot">라밥은 관악구 라이더 전용 식사 멤버십이에요 · 문의 라밥 카카오톡 채널</div>
+  <div class="join"><img src="data:image/png;base64,{qr_b64(APP_URL + "/#/join?code=" + codes[s["id"]])}"><div><div class="jh">라이더님, 아직 라밥 회원이 아니세요?</div><div class="jt">이 QR을 찍으면 바로 가입돼요 · 첫 주 무료 · 초대 코드 <b>{codes[s["id"]]}</b></div></div></div>
+  <div class="foot">라밥은 관악구 라이더 전용 식사 멤버십이에요 · 문의 yslee@doeat.io</div>
 </section>''')
 open("notice.html", "w").write(f'''<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>라밥 매장 안내문</title><style>
 @page{{size:A4;margin:0}} body{{margin:0;font-family:-apple-system,"Apple SD Gothic Neo",sans-serif;color:#191F28}}
@@ -35,5 +45,6 @@ open("notice.html", "w").write(f'''<!doctype html><html lang="ko"><head><meta ch
 .how .h{{font-size:14pt;font-weight:800;margin-bottom:3mm}} .how ol{{padding-left:6mm;margin:0;font-size:13pt;line-height:1.7}} .how li{{margin-bottom:3mm}}
 .time{{margin-top:auto;background:#F2F4F6;border-radius:5mm;padding:6mm;text-align:center;font-size:16pt;font-weight:800}}
 .foot{{font-size:10pt;color:#8B95A1;text-align:center;margin-top:6mm}}
+.join{{display:flex;align-items:center;gap:6mm;border:1px solid #E5E8EB;border-radius:5mm;padding:5mm 6mm;margin-top:6mm}} .join img{{width:28mm;height:28mm}} .jh{{font-size:13pt;font-weight:800}} .jt{{font-size:11pt;color:#4E5968;margin-top:2mm}}
 </style></head><body>{"".join(pages)}</body></html>''')
 print(f"notice.html 생성: {len(stores)}곳")
