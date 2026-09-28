@@ -298,13 +298,12 @@ async function pageHome(){
   startClock();
   window._stores = st.stores || [];
   const setView = (v) => {
-    localStorage.setItem("rabap_view", v);
     $("#segList").classList.toggle("on", v === "list"); $("#segMap").classList.toggle("on", v === "map");
     $("#viewList").style.display = v === "list" ? "" : "none"; $("#viewMap").style.display = v === "map" ? "" : "none";
     if (v === "map") renderMap(window._stores);
   };
   $("#segList").onclick = () => setView("list"); $("#segMap").onclick = () => setView("map");
-  setView(localStorage.getItem("rabap_view") || "map");
+  setView("map");
   const use = $("#useBtn"); if (use) use.onclick = () => pickStoreAndUse(window._stores);
 }
 
