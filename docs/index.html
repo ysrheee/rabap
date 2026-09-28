@@ -312,8 +312,12 @@ function renderMap(stores){
   const el = $("#map"); if (!el) return;
   if (map) { map.remove(); map = null; }
   map = L.map("map", { zoomControl: false, attributionControl: false }).setView([37.4784, 126.9516], 14);
-  L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19 }).addTo(map);
-  L.control.attribution({ prefix: false }).addAttribution("© OpenStreetMap").addTo(map);
+  const osm = L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19 }).addTo(map);
+  const attr = L.control.attribution({ prefix: false }).addAttribution("© OpenStreetMap").addTo(map);
+  let swapped = false;
+  osm.on("tileerror", () => { if (swapped) return; swapped = true; map.removeLayer(osm);
+    L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}", { maxZoom: 19 }).addTo(map);
+    attr.removeAttribution("© OpenStreetMap").addAttribution("© Esri"); });
   const pts = stores.filter(s => s.lat && s.lng);
   pts.forEach(s => {
     const icon = L.divIcon({ className: "", html: `<div class="pin ${s.open_now?"":"off"}"><span>🍚</span></div>`, iconSize: [34, 34], iconAnchor: [17, 34], popupAnchor: [0, -34] });
