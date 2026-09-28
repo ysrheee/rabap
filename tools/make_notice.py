@@ -21,7 +21,7 @@ for s in stores:
       </ol>
     </div>
   </div>
-  <div class="time">할인 시간 &nbsp;14:00 ~ 17:00 &nbsp;·&nbsp; 20:00 ~ 24:00</div>
+  <div class="time">할인 시간 &nbsp;14:00 ~ 17:00</div>
   <div class="foot">라밥은 관악구 라이더 전용 식사 멤버십이에요 · 문의 라밥 카카오톡 채널</div>
 </section>''')
 open("notice.html", "w").write(f'''<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>라밥 매장 안내문</title><style>

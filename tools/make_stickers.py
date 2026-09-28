@@ -14,7 +14,7 @@ for s in stores:
   <img src="data:image/png;base64,{b64}">
   <div class="store">{html.escape(s['name'])}</div>
   <div class="how">① 라밥 앱 열기 → ② 이 QR 찍기 → ③ 할인 화면을 사장님께 보여주기</div>
-  <div class="time">할인 시간 14:00~17:00 · 20:00~24:00 · 하루 1회</div>
+  <div class="time">할인 시간 14:00~17:00 · 하루 1회</div>
 </section>""")
 open("stickers.html", "w").write(f"""<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>라밥 QR 스티커</title><style>
 @page{{size:A4;margin:0}} body{{margin:0;font-family:-apple-system,"Apple SD Gothic Neo",sans-serif}}
