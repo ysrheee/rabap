@@ -253,7 +253,7 @@ async function pageHome(){
       <div class="ic ${s.open_now?"on":""}">🍚</div>
       <div class="t"><div class="n">${esc(s.name)}</div>
       <div class="m">${s.open_now ? "영업 중" : "영업시간 아님"}${s.menu_note ? " · " + esc(s.menu_note) : ""}</div></div>
-      <div class="r">-3,000원</div><span class="chev">${ICON.chev}</span></a>`).join("");
+      <div class="r">3,000원 할인</div><span class="chev">${ICON.chev}</span></a>`).join("");
   app.innerHTML = `<div class="page">
     <div class="mcard ${cls}">
       <div class="brand">라밥 멤버십</div>
@@ -314,7 +314,7 @@ function renderMap(stores){
   pts.forEach(s => {
     const icon = L.divIcon({ className: "", html: `<div class="pin ${s.open_now?"":"off"}"><span>🍚</span></div>`, iconSize: [34, 34], iconAnchor: [17, 34], popupAnchor: [0, -34] });
     L.marker([s.lat, s.lng], { icon }).addTo(map)
-      .bindPopup(`<b>${esc(s.name)}</b><br><span style="color:#6B7684">${s.open_now ? "영업 중" : "영업시간 아님"} · -3,000원</span><br><a href="#/store/${s.id}">자세히 보기 ›</a>`);
+      .bindPopup(`<b>${esc(s.name)}</b><br><span style="color:#6B7684">${s.open_now ? "영업 중" : "영업시간 아님"} · 3,000원 할인</span><br><a href="#/store/${s.id}">자세히 보기 ›</a>`);
   });
   if (pts.length) map.fitBounds(L.latLngBounds(pts.map(s => [s.lat, s.lng])).pad(0.3), { maxZoom: 16 });
   let meMarker = null;
