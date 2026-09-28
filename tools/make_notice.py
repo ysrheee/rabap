@@ -32,7 +32,7 @@ for s in stores:
   </div>
   <div class="time">할인 시간 &nbsp;14:00 ~ 17:00 &nbsp;·&nbsp; {s["min_order_krw"]:,}원 이상 주문 시</div>
   <div class="join"><img src="data:image/png;base64,{qr_b64(APP_URL + "/#/join?code=" + codes[s["id"]])}"><div><div class="jh">라이더님, 아직 라밥 회원이 아니세요?</div><div class="jt">이 QR을 찍으면 바로 가입돼요 · 첫 주 무료 · 초대 코드 <b>{codes[s["id"]]}</b></div></div></div>
-  <div class="foot">라밥은 관악구 라이더 전용 식사 멤버십이에요 · 문의 yslee@doeat.io</div>
+  <div class="foot">라밥은 관악구 라이더 전용 식사 멤버십이에요 · 문의 open.kakao.com/o/ssiAtQPi</div>
 </section>''')
 open("notice.html", "w").write(f'''<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>라밥 매장 안내문</title><style>
 @page{{size:A4;margin:0}} body{{margin:0;font-family:-apple-system,"Apple SD Gothic Neo",sans-serif;color:#191F28}}

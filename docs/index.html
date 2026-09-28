@@ -156,6 +156,7 @@ p{margin:0}
 <script>
 const API = "https://zthrcavaccgtvsyffpeh.supabase.co/functions/v1/api";
 const TOSS_CLIENT_KEY = "test_ck_Z1aOwX7K8mBqgaxkbdAP3yQxzvNP";
+const CHAT_URL = "https://open.kakao.com/o/ssiAtQPi";
 const KAKAO_JS_KEY = ""; // 동원님에게 받으면 입력 → 카톡 직접 열림
 try { if (KAKAO_JS_KEY && window.Kakao && !Kakao.isInitialized()) Kakao.init(KAKAO_JS_KEY); } catch {}
 const $ = (s) => document.querySelector(s);
@@ -266,7 +267,7 @@ async function pageHome(){
   const d = new Date(); const dateStr = `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,"0")}.${String(d.getDate()).padStart(2,"0")} (${"일월화수목금토"[d.getDay()]})`;
   let cls = "", pill = "", hint = "";
   if (me.used_today) { cls = "done"; pill = "내일 다시 사용 가능"; hint = `오늘 ${esc(me.used_today.store)}에서 사용했어요 · 내일 14:00부터`; }
-  else if (!me.membership?.live) { cls = "off"; pill = "무료 기간 종료"; hint = "친구를 초대하면 1주 더 쓸 수 있어요"; }
+  else if (!me.membership?.live) { cls = "off"; pill = "무료 기간 종료"; hint = "친구를 초대하면 1주 더 쓸 수 있어요 · 문의는 내역 탭 오픈채팅"; }
   else if (me.in_window) { cls = ""; pill = "● 지금 3,000원 할인 가능"; hint = "할인 시간 14:00~17:00 · 8,000원 이상 주문 시 · 하루 1회"; }
   else { cls = "off"; pill = me.next_window ? `${me.next_window}부터 할인 가능` : "오늘 할인 시간 종료"; hint = "할인 시간 14:00~17:00 · 8,000원 이상 주문 시"; }
   const canUse = me.membership?.live && me.in_window && !me.used_today;
@@ -507,7 +508,8 @@ async function pageHistory(){
     ${m?.status === "canceled" ? `<p class="cap mt8">해지 예약됨 · ${end ? `${end.getMonth()+1}월 ${end.getDate()}일` : ""}까지 이용 가능</p><button class="btn sub2 mt8" id="resume">해지 취소</button>`
       : `${m?.card ? `<button class="btn sub2 mt16" id="rmCard">카드 변경</button>` : `<button class="btn mt16" id="addCard">결제 카드 등록</button><p class="cap center mt8">등록해 두면 무료가 끝나도 끊기지 않아요. 지금은 결제되지 않아요.</p>`}
          <button class="btn line mt8" id="cancel" style="color:var(--g500)">멤버십 해지</button>`}
-    <p class="cap center mt24"><a href="terms.html" style="color:var(--g500)">이용약관</a> · <a href="privacy.html" style="color:var(--g500)">개인정보처리방침</a> · 문의 yslee@doeat.io</p>
+    <a class="btn sub2 mt24" href="${CHAT_URL}" target="_blank">문의·건의는 라밥 라이더 오픈채팅</a>
+    <p class="cap center mt16"><a href="terms.html" style="color:var(--g500)">이용약관</a> · <a href="privacy.html" style="color:var(--g500)">개인정보처리방침</a> · yslee@doeat.io</p>
   </div>${nav("/history")}`;
   const bind = (id, fn) => { const el = $(id); if (el) el.onclick = fn; };
   bind("#addCard", () => registerCard(me));
