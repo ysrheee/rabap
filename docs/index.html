@@ -418,7 +418,7 @@ function showResult(r){
   if (r.ok) {
     el.innerHTML = `<div class="minicard"><div class="b"><span>라밥 멤버십</span><span class="v">회원 · ${esc(r.member_since || "")} 가입</span></div><div class="p">${esc(r.phone_masked || "")}</div><div class="s">사장님, 이 카드의 빛이 움직이면 정상이에요</div></div>
       <div class="clock" id="live">--:--:--</div>
-      <div class="amt" style="margin-top:6px">-${won(r.discount_krw)}</div><div class="st">${esc(r.store)}</div>
+      <div class="amt" style="margin-top:6px">${won(r.discount_krw)} 할인</div><div class="st">${esc(r.store)}</div>
       <div class="meta"><span>오늘 이 식당 <b>${r.seq || 1}번째</b> 사용</span><span>사용번호 <b>${esc(r.code || "")}</b></span></div>
       <div class="show">계산 금액에서 3,000원 빼주세요</div>
       <div class="cnt"><span id="c">30</span>초 후 자동으로 닫혀요</div><button class="undo" id="undo">잘못 눌렀어요 (60초 안에만 취소돼요)</button><button class="btn">확인</button>`;
