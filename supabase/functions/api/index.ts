@@ -174,8 +174,10 @@ async function stores(_u: any) {
     const hours = (s.store_hours ?? []).filter((h: any) => h.weekday === wd)
       .map((h: any) => [h.open_time.slice(0, 5), h.close_time.slice(0, 5)]).sort();
     const open_now = (s.store_hours ?? []).some((h: any) => h.weekday === wd && inRange(t, h.open_time, h.close_time));
+    const days = new Set((s.store_hours ?? []).map((h: any) => h.weekday));
+    const closed_days = [0,1,2,3,4,5,6].filter((d) => !days.has(d));
     const { store_hours: _h, ...rest } = s;
-    return { ...rest, today_hours: hours, open_now };
+    return { ...rest, today_hours: hours, open_now, closed_today: hours.length === 0, closed_days };
   });
   return json({ ok: true, stores: out });
 }
