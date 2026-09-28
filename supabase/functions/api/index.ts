@@ -302,6 +302,11 @@ Deno.serve(async (req) => {
   let b: any; try { b = await req.json(); } catch { return fail("bad json"); }
 
   if (b.action === "billing_run") return billingRun(req);
+  if (b.action === "track") { // 인증 없는 이벤트 기록 (초대 링크 열림 등)
+    const ev = String(b.event || "").slice(0, 40); if (!ev) return fail("event 필요");
+    await db.from("events").insert({ event: ev, code: b.code ? String(b.code).slice(0, 20).toUpperCase() : null, visitor: b.visitor ? String(b.visitor).slice(0, 64) : null, ua: (req.headers.get("user-agent") || "").slice(0, 200) });
+    return json({ ok: true });
+  }
   if (b.action === "start") return start(b);
   if (b.action === "verify") return verify(b);
   const u = await auth(b.token);

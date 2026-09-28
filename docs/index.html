@@ -193,8 +193,11 @@ function nav(active){
 const topbar = (href="#/") => `<div class="top"><a class="back" href="${href}">${ICON.back}</a></div>`;
 
 // ---------- 화면 ----------
+function visitorId(){ let v = localStorage.getItem("rabap_vis"); if (!v) { v = crypto.randomUUID(); localStorage.setItem("rabap_vis", v); } return v; }
+function track(event, code){ try { const k = "rabap_tr_" + event + "_" + (code || ""); if (sessionStorage.getItem(k)) return; sessionStorage.setItem(k, "1"); fetch(API, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "track", event, code, visitor: visitorId() }) }); } catch {} }
 function pageJoin(q){
   const inviteFromLink = q.get("code") || "";
+  track(inviteFromLink ? "invite_open" : "join_view", inviteFromLink);
   let step = "phone", isNew = false, mode = null;
   const draw = () => {
     app.innerHTML = `<div class="page">
