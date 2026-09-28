@@ -213,7 +213,7 @@ function pageJoin(q){
       <div class="step"><b>2</b><span>할인 시간(14~17시)에 제휴 식당에서 8,000원 이상 주문</span></div>
       <div class="step"><b>3</b><span>계산할 때 홈 화면의 멤버십 카드를 보여주면 끝</span></div>
     </div>
-    <p class="cap center mt24">시작하면 <a href="privacy.html" style="color:var(--g500)">개인정보처리방침</a>에 동의한 것으로 봐요.<br>첫 달 무료, 이후 월 1,000원 (정가 3,000원)</p>` : `<button class="btn line mt16" id="resend">인증번호 다시 받기</button>`}
+    <p class="cap center mt24">시작하면 <a href="privacy.html" style="color:var(--g500)">개인정보처리방침</a>에 동의한 것으로 봐요.<br>첫 달 무료, 이후 월 3,000원</p>` : `<button class="btn line mt16" id="resend">인증번호 다시 받기</button>`}
   </div>`;
     $("#go").onclick = submit; if ($("#resend")) $("#resend").onclick = () => { step = "phone"; draw(); };
     ($("#otp") || $("#phone"))?.focus();
@@ -254,7 +254,7 @@ async function pageHome(){
   const canUse = me.membership?.live && me.in_window && !me.used_today;
   const daysLeft = me.membership ? Math.ceil((new Date(me.membership.period_end) - Date.now()) / 86400000) : 99;
   const banner = me.membership?.live && !me.membership.card && me.membership.status !== "canceled" && daysLeft <= 7
-    ? `<a class="sec" href="#/history" style="display:flex;align-items:center;gap:12px;text-decoration:none;color:inherit;padding:14px 16px"><div class="ic on">💳</div><div style="flex:1"><div style="font-weight:700">무료가 ${daysLeft}일 남았어요</div><div class="cap">결제수단을 등록하면 월 1,000원으로 계속돼요</div></div><span class="chev">${ICON.chev}</span></a>` : "";
+    ? `<a class="sec" href="#/history" style="display:flex;align-items:center;gap:12px;text-decoration:none;color:inherit;padding:14px 16px"><div class="ic on">💳</div><div style="flex:1"><div style="font-weight:700">무료가 ${daysLeft}일 남았어요</div><div class="cap">결제수단을 등록하면 월 3,000원으로 계속돼요</div></div><span class="chev">${ICON.chev}</span></a>` : "";
   const rows = (st.stores || []).map(s => `<a class="row" href="#/store/${s.id}">
       <div class="ic ${s.open_now?"on":""}">🍚</div>
       <div class="t"><div class="n">${esc(s.name)}</div>
@@ -453,7 +453,7 @@ async function pageHistory(){
       <div class="kv"><span class="k">번호</span><span class="v">${esc(me.phone_masked)}</span></div>
       <div class="kv"><span class="k">상태</span><span class="v">${m?.live ? "이용 중 · 첫 달 무료" : "만료"}</span></div>
       <div class="kv"><span class="k">무료 기간</span><span class="v">${end ? `${end.getMonth()+1}월 ${end.getDate()}일까지` : "-"}</span></div>
-      <div class="kv"><span class="k">이후 요금</span><span class="v"><span class="strike">월 3,000원</span>월 1,000원</span></div>
+      <div class="kv"><span class="k">이후 요금</span><span class="v">월 3,000원</span></div>
       <div class="kv"><span class="k">결제 카드</span><span class="v">${m?.card ? esc(m.card) : '<span style="color:var(--g400);font-weight:400">미등록</span>'}</span></div>
     </div>
     ${m?.status === "canceled" ? `<p class="cap mt8">해지 예약됨 · ${end ? `${end.getMonth()+1}월 ${end.getDate()}일` : ""}까지 이용 가능</p><button class="btn sub2 mt8" id="resume">해지 취소</button>`

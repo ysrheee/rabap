@@ -242,7 +242,7 @@ async function tossPost(path: string, body: unknown) {
   const r = await fetch(TOSS + path, { method: "POST", headers: { Authorization: tossAuth(), "Content-Type": "application/json" }, body: JSON.stringify(body) });
   const j = await r.json().catch(() => ({})); return { ok: r.ok, j };
 }
-const PRICE = 1000;
+const PRICE = 3000;
 
 // 카드 등록 완료 콜백: authKey → billingKey
 async function billingIssue(u: any, b: { authKey?: string; customerKey?: string }) {
@@ -280,7 +280,7 @@ async function billingRun(req: Request) {
   for (const m of due ?? []) {
     if (!m.billing_key) { await db.from("memberships").update({ status: "expired" }).eq("id", m.id); out.push({ id: m.id, r: "expired_no_card" }); continue; }
     const orderId = `rabap-${m.id.slice(0, 8)}-${Date.now()}`;
-    const { ok, j } = await tossPost(`/billing/${m.billing_key}`, { customerKey: m.customer_key, amount: PRICE, orderId, orderName: "라밥 멤버십 1개월", customerName: m.users?.phone });
+    const { ok, j } = await tossPost(`/billing/${m.billing_key}`, { customerKey: m.customer_key, amount: PRICE, orderId, orderName: "라밥 멤버십 1개월 (3,000원)", customerName: m.users?.phone });
     if (ok) {
       const base = Math.max(new Date(m.current_period_end).getTime(), Date.now());
       await db.from("memberships").update({ status: "active", fail_count: 0, current_period_end: new Date(base + 30 * 86400000).toISOString() }).eq("id", m.id);
