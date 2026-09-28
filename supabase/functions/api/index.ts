@@ -71,7 +71,8 @@ async function createUser(phone: string, code: string) {
     .insert({ phone, invited_by: inv.issuer_id, invite_code_used: code }).select().single();
   if (error) return fail("가입 처리 중 오류: " + error.message, 500);
   await db.from("invites").update({ used_count: inv.used_count + 1 }).eq("code", code);
-  const end = new Date(Date.now() + 30 * 24 * 3600 * 1000).toISOString();
+  const FREE_DAYS = Number(Deno.env.get("FREE_DAYS") || "30"); // 결제 연동 후 7로 변경
+  const end = new Date(Date.now() + FREE_DAYS * 24 * 3600 * 1000).toISOString();
   await db.from("memberships").insert({ user_id: user.id, status: "active", price_krw: 0, current_period_end: end });
   const my = "R" + phone.slice(-4) + Math.random().toString(36).slice(2, 5).toUpperCase();
   await db.from("invites").insert({ code: my, issuer_id: user.id, max_uses: 5 });
