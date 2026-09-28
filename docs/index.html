@@ -134,9 +134,12 @@ p{margin:0}
 <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://js.tosspayments.com/v2/standard"></script>
+<script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.4/kakao.min.js" integrity="sha384-DKYJZ8NLiK8MN4/C5P2dtSmLQ4KwPaoqAfyA/DfmEc1VDxu4yyC7wy6K1Hs90nka" crossorigin="anonymous"></script>
 <script>
 const API = "https://zthrcavaccgtvsyffpeh.supabase.co/functions/v1/api";
 const TOSS_CLIENT_KEY = "test_ck_D5GePWvyJnrK0W0k6q8gLzN97Eoq";
+const KAKAO_JS_KEY = ""; // 동원님에게 받으면 입력 → 카톡 직접 열림
+try { if (KAKAO_JS_KEY && window.Kakao && !Kakao.isInitialized()) Kakao.init(KAKAO_JS_KEY); } catch {}
 const $ = (s) => document.querySelector(s);
 const app = $("#app");
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -196,7 +199,7 @@ function pageJoin(q){
   const draw = () => {
     app.innerHTML = `<div class="page">
     <h1 style="margin-top:56px">${step === "phone" ? "라이더님,<br>밥값 3,000원 아끼세요" : "문자로 보낸<br>인증번호를 입력해 주세요"}</h1>
-    <p class="sub">${step === "phone" ? "관악구 제휴 식당에서 비피크 시간에 매끼 할인" : `${$("#phone")?.value || phoneVal} 로 보냈어요`}</p>
+    <p class="sub">${step === "phone" ? "관악구 제휴 식당에서 비피크 시간에 매끼 할인<br>초대받은 라이더만 가입할 수 있어요" : `${$("#phone")?.value || phoneVal} 로 보냈어요`}</p>
     <div class="field" style="margin-top:36px${step === "phone" ? "" : ";display:none"}"><label>휴대폰 번호</label><input id="phone" type="tel" placeholder="010-0000-0000" inputmode="numeric" value="${esc(phoneVal)}"></div>
     ${step === "otp" ? `<div class="field" style="margin-top:36px"><label>인증번호</label><input id="otp" type="tel" placeholder="6자리" inputmode="numeric" maxlength="6" autocomplete="one-time-code"></div>` : ""}
     <div class="field" id="codeWrap" style="${(step === "phone" && !inviteFromLink) || (step === "otp" && !isNew) ? "display:none" : ""}"><label>초대 코드 <span style="color:var(--g400);font-weight:400">· 처음 가입할 때만</span></label><input id="code" value="${esc(codeVal)}" placeholder="8자리 코드" autocapitalize="characters" autocomplete="off"></div>
@@ -403,19 +406,24 @@ async function pageInvite(){
   const me = await api("me"); if (!me.ok) return;
   const inv = me.invite || { code: "-", used_count: 0, max_uses: 0 };
   const link = `${location.origin}${location.pathname}#/join?code=${inv.code}`;
-  const msg = `라밥 초대장 🍚\n관악 라이더끼리 제휴 식당에서 매끼 3,000원 할인받는 앱이에요. 첫 달 무료.\n초대 코드: ${inv.code}\n${link}`;
+  const msg = `라밥 초대장 🍚\n관악 라이더끼리 제휴 식당에서 매끼 3,000원 할인받는 멤버십이에요. 초대받은 라이더만 가입할 수 있고, 첫 달 무료.\n초대 코드: ${inv.code}\n${link}`;
   app.innerHTML = `<div class="page">
     <h1 style="margin-top:28px">같이 뛰는 동료를<br>초대해 보세요</h1>
-    <p class="sub">친구가 가입하면 내 무료 기간이 7일 늘어나요. ${inv.max_uses}명까지.</p>
+    <p class="sub">라밥은 초대받은 라이더만 가입할 수 있어요.<br>친구가 가입하면 내 무료 기간이 7일 늘어나요. ${inv.max_uses}명까지.</p>
     <div class="sec mt24 center">
       <div class="cap">내 초대 코드</div>
       <div class="code">${esc(inv.code)}</div>
       <div class="cap">${inv.used_count}명 가입 · +${inv.used_count * 7}일 받음 · ${Math.max(inv.max_uses - inv.used_count, 0)}자리 남음</div>
     </div>
-    <button class="btn mt16" id="share">카카오톡으로 초대하기</button>
+    <button class="btn mt16" id="share">${KAKAO_JS_KEY ? "카카오톡으로 초대하기" : "초대 링크 보내기"}</button>
     <button class="btn sub2 mt8" id="copy">링크 복사</button>
   </div>${nav("/invite")}`;
-  $("#share").onclick = async () => { if (navigator.share) { try { await navigator.share({ text: msg }); } catch {} } else { await navigator.clipboard.writeText(msg); alert("초대 문구를 복사했어요. 카톡에 붙여넣으세요."); } };
+  $("#share").onclick = async () => {
+    if (KAKAO_JS_KEY && window.Kakao?.isInitialized()) { // 카톡 직접 열기
+      try { Kakao.Share.sendDefault({ objectType: "text", text: msg.replace(link, "").trim(), link: { mobileWebUrl: link, webUrl: link }, buttonTitle: "라밥 시작하기" }); return; } catch {}
+    }
+    if (navigator.share) { try { await navigator.share({ text: msg }); } catch {} } else { await navigator.clipboard.writeText(msg); toast("초대 문구를 복사했어요. 카톡에 붙여넣으세요."); }
+  };
   $("#copy").onclick = async () => { await navigator.clipboard.writeText(link); alert("링크를 복사했어요"); };
 }
 
