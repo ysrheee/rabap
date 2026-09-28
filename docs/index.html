@@ -51,6 +51,20 @@ p{margin:0}
 .chip.done{background:var(--brand-tint);color:var(--brand-press)}
 .chip .d{width:6px;height:6px;border-radius:50%;background:currentColor}
 .status{padding:24px 0 8px}
+.mcard{position:relative;overflow:hidden;border-radius:22px;padding:22px 20px;color:#fff;background:linear-gradient(120deg,#FF6B35,#FF8F5E 45%,#FFB08A);margin-top:8px}
+.mcard::after{content:"";position:absolute;inset:-60%;background:linear-gradient(115deg,transparent 40%,rgba(255,255,255,.35) 50%,transparent 60%);animation:sheen 2.6s linear infinite}
+@keyframes sheen{from{transform:translateX(-40%)}to{transform:translateX(40%)}}
+.mcard>*{position:relative;z-index:1}
+.mcard .brand{font-weight:800;font-size:15px;letter-spacing:-.01em;opacity:.95}
+.mcard .who{font-size:22px;font-weight:800;margin-top:14px;letter-spacing:-.02em}
+.mcard .clock{font-size:34px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-.02em;margin-top:6px;line-height:1.1}
+.mcard .date{font-size:13px;opacity:.9;margin-top:2px}
+.mcard .pill{display:inline-block;margin-top:14px;background:rgba(255,255,255,.22);border-radius:999px;padding:6px 12px;font-size:13px;font-weight:700;backdrop-filter:blur(4px)}
+.mcard.off{background:linear-gradient(120deg,#8B95A1,#B0B8C1)}
+.mcard.done{background:linear-gradient(120deg,#333D4B,#4E5968)}
+.sheet{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:40;display:flex;align-items:flex-end}
+.sheet .box{background:#fff;width:100%;max-width:480px;margin:0 auto;border-radius:22px 22px 0 0;padding:20px 20px calc(20px + env(safe-area-inset-bottom))}
+.sheet h3{margin:0 0 6px;font-size:18px}
 .status .big{font-size:26px;font-weight:700;letter-spacing:-.02em;line-height:1.3;margin-top:12px}
 .status .sub{margin-top:6px}
 .list{margin:0 -20px}
@@ -190,7 +204,7 @@ function pageJoin(q){
     ${step === "phone" ? `<div class="sec" style="margin-top:28px">
       <div class="step"><b>1</b><span>초대 코드로 시작하면 첫 달 무료예요</span></div>
       <div class="step"><b>2</b><span>할인 시간(14~17시, 20~24시)에 제휴 식당 방문</span></div>
-      <div class="step"><b>3</b><span>식당 앞에서 "여기서 할인 사용하기"를 누르고 화면을 보여주면 끝</span></div>
+      <div class="step"><b>3</b><span>계산할 때 홈 화면의 멤버십 카드를 보여주면 끝</span></div>
     </div>
     <p class="cap center mt24">시작하면 <a href="privacy.html" style="color:var(--g500)">개인정보처리방침</a>에 동의한 것으로 봐요.<br>첫 달 무료, 이후 월 1,000원 (정가 3,000원)</p>` : `<button class="btn line mt16" id="resend">인증번호 다시 받기</button>`}
   </div>`;
@@ -217,33 +231,45 @@ function pageJoin(q){
   draw();
 }
 
+let clockTimer = null;
+function startClock(){ if (clockTimer) clearInterval(clockTimer); const f = () => { const el = $("#clk"); if (!el) { clearInterval(clockTimer); return; } const d = new Date(); el.textContent = `${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}:${String(d.getSeconds()).padStart(2,"0")}`; }; f(); clockTimer = setInterval(f, 1000); }
+
 async function pageHome(){
   app.innerHTML = `<div class="page">${loading()}</div>${nav("/")}`;
   const [me, st] = await Promise.all([api("me"), api("stores")]);
   if (!me.ok) return;
-  let chip, title, sub;
-  if (me.used_today) { chip = `<span class="chip done">오늘 사용 완료</span>`; title = `오늘 3,000원 아꼈어요`; sub = `${esc(me.used_today.store)} · 내일 14시부터 다시 할인`; }
-  else if (!me.membership?.live) { chip = `<span class="chip off">멤버십 만료</span>`; title = "멤버십이 만료됐어요"; sub = "라밥 카톡채널로 문의해 주세요"; }
-  else if (me.in_window) { chip = `<span class="chip on"><i class="d"></i>지금 할인 가능</span>`; title = "지금 식당 가면<br>3,000원 할인이에요"; sub = `현재 ${me.now} · 하루 1회`; }
-  else { chip = `<span class="chip off">할인 시간 아님</span>`; title = me.next_window ? `${me.next_window}부터<br>할인 시간이에요` : "오늘 할인 시간은<br>끝났어요"; sub = me.next_window ? `현재 ${me.now} · 미리 식당을 골라두세요` : "내일 14:00부터 다시 시작"; }
-  const canScan = me.membership?.live && me.in_window && !me.used_today;
+  const d = new Date(); const dateStr = `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,"0")}.${String(d.getDate()).padStart(2,"0")} (${"일월화수목금토"[d.getDay()]})`;
+  let cls = "", pill = "", hint = "";
+  if (me.used_today) { cls = "done"; pill = "오늘 할인 사용함"; hint = `${esc(me.used_today.store)}에서 사용 · 내일 14시부터 다시`; }
+  else if (!me.membership?.live) { cls = "off"; pill = "멤버십 만료"; hint = "내역 탭에서 결제수단을 확인해 주세요"; }
+  else if (me.in_window) { cls = ""; pill = "● 지금 3,000원 할인 가능"; hint = "계산할 때 이 카드를 사장님께 보여주세요"; }
+  else { cls = "off"; pill = me.next_window ? `${me.next_window}부터 할인 가능` : "오늘 할인 시간 종료"; hint = "할인 시간 14~17시 · 20~24시"; }
+  const canUse = me.membership?.live && me.in_window && !me.used_today;
   const daysLeft = me.membership ? Math.ceil((new Date(me.membership.period_end) - Date.now()) / 86400000) : 99;
   const banner = me.membership?.live && !me.membership.card && me.membership.status !== "canceled" && daysLeft <= 7
-    ? `<a class="sec" href="#/history" style="display:flex;align-items:center;gap:12px;text-decoration:none;color:inherit;padding:14px 16px"><div class="ic on">💳</div><div style="flex:1"><div style="font-weight:700">무료가 ${daysLeft}일 남았어요</div><div class="cap">카드를 등록하면 월 1,000원으로 계속돼요</div></div><span class="chev">${ICON.chev}</span></a>` : "";
+    ? `<a class="sec" href="#/history" style="display:flex;align-items:center;gap:12px;text-decoration:none;color:inherit;padding:14px 16px"><div class="ic on">💳</div><div style="flex:1"><div style="font-weight:700">무료가 ${daysLeft}일 남았어요</div><div class="cap">결제수단을 등록하면 월 1,000원으로 계속돼요</div></div><span class="chev">${ICON.chev}</span></a>` : "";
   const rows = (st.stores || []).map(s => `<a class="row" href="#/store/${s.id}">
       <div class="ic ${s.open_now?"on":""}">🍚</div>
       <div class="t"><div class="n">${esc(s.name)}</div>
       <div class="m">${s.open_now ? "영업 중" : "영업시간 아님"}${s.menu_note ? " · " + esc(s.menu_note) : ""}</div></div>
       <div class="r">-3,000원</div><span class="chev">${ICON.chev}</span></a>`).join("");
   app.innerHTML = `<div class="page">
-    <div class="status">${chip}<div class="big">${title}</div><p class="sub">${sub}</p></div>
-    ${canScan ? `<p class="cap mt8">식당을 고르고 "여기서 할인 사용하기"를 누르세요</p>` : ""}
+    <div class="mcard ${cls}">
+      <div class="brand">라밥 멤버십</div>
+      <div class="who">${esc(me.phone_masked)}</div>
+      <div class="clock" id="clk">--:--:--</div>
+      <div class="date">${dateStr}</div>
+      <div class="pill">${pill}</div>
+    </div>
+    <p class="cap mt8" style="padding:0 4px">${hint}</p>
+    ${canUse ? `<button class="btn mt16" id="useBtn">이 식당에서 사용 (기록)</button><p class="cap center mt8">사장님께 카드를 보여주고 누르면 내역에 남아요</p>` : ""}
     ${banner}
     <h2>제휴 식당 <span class="cap" style="font-weight:500">${(st.stores||[]).length}</span></h2>
     <div class="seg"><button id="segList">목록</button><button id="segMap">지도</button></div>
     <div id="viewList" class="list">${rows || `<div class="empty">제휴 식당을 준비하고 있어요</div>`}</div>
     <div id="viewMap" style="display:none"><div id="map"></div><p class="cap center mt8">핀을 누르면 식당 정보가 보여요</p></div>
   </div>${nav("/")}`;
+  startClock();
   window._stores = st.stores || [];
   const setView = (v) => {
     localStorage.setItem("rabap_view", v);
@@ -253,6 +279,27 @@ async function pageHome(){
   };
   $("#segList").onclick = () => setView("list"); $("#segMap").onclick = () => setView("map");
   setView(localStorage.getItem("rabap_view") || "map");
+  const use = $("#useBtn"); if (use) use.onclick = () => pickStoreAndUse(window._stores);
+}
+
+// 가까운 식당 자동 선택 → 확인 시트 → 기록
+function pickStoreAndUse(stores){
+  const open = stores.filter(s => s.open_now);
+  const show = (sorted, note) => {
+    const el = document.createElement("div"); el.className = "sheet";
+    el.innerHTML = `<div class="box"><h3>어느 식당인가요?</h3><p class="cap">${note}</p><div class="list" style="margin:8px -20px 0">${sorted.map(s => `<a class="row" href="javascript:void 0" data-id="${s.id}"><div class="ic on">🍚</div><div class="t"><div class="n">${esc(s.name)}</div><div class="m">${s._d != null ? Math.round(s._d) + "m" : ""}</div></div><span class="chev">${ICON.chev}</span></a>`).join("")}</div><button class="btn sub2 mt16" id="closeSheet">닫기</button></div>`;
+    document.body.appendChild(el);
+    el.onclick = (e) => { if (e.target === el) el.remove(); };
+    el.querySelector("#closeSheet").onclick = () => el.remove();
+    el.querySelectorAll("[data-id]").forEach(a => a.onclick = async () => { el.remove(); const r = await api("redeem_at", { store_id: a.dataset.id }); showResult(r); });
+  };
+  const list = open.length ? open : stores;
+  if (!navigator.geolocation) return show(list, "식당을 선택하세요");
+  navigator.geolocation.getCurrentPosition(p => {
+    const me = [p.coords.latitude, p.coords.longitude];
+    const withD = list.map(s => ({ ...s, _d: (s.lat && s.lng) ? L.latLng(me).distanceTo([s.lat, s.lng]) : null })).sort((a, b) => (a._d ?? 1e9) - (b._d ?? 1e9));
+    show(withD, "가까운 순이에요");
+  }, () => show(list, "식당을 선택하세요"), { enableHighAccuracy: true, timeout: 5000, maximumAge: 60000 });
 }
 
 let map = null;
@@ -306,16 +353,8 @@ async function pageStore(id){
     </div>
     <div style="height:88px"></div>
   </div>
-  <div class="cta"><button class="btn" id="useHere">여기서 할인 사용하기</button><a class="cap center" href="#/scan" style="display:block;margin-top:10px;color:var(--g500);text-decoration:none">위치가 안 잡히면 QR로 사용 ›</a></div>`;
-  $("#useHere").onclick = () => {
-    const b = $("#useHere"); b.disabled = true; b.textContent = "위치 확인 중…";
-    if (!navigator.geolocation) { b.disabled = false; b.textContent = "여기서 할인 사용하기"; return showResult({ ok: false, reason: "이 기기는 위치를 지원하지 않아요. QR로 사용해 주세요" }); }
-    navigator.geolocation.getCurrentPosition(async (p) => {
-      const r = await api("redeem_here", { store_id: s.id, lat: p.coords.latitude, lng: p.coords.longitude, accuracy: p.coords.accuracy });
-      b.disabled = false; b.textContent = "여기서 할인 사용하기"; showResult(r);
-    }, () => { b.disabled = false; b.textContent = "여기서 할인 사용하기"; showResult({ ok: false, reason: "위치 권한이 필요해요. 브라우저 설정에서 위치를 허용하거나 QR로 사용해 주세요" }); },
-    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
-  };
+  <div class="cta"><button class="btn" id="useHere">이 식당에서 사용 (기록)</button></div>`;
+  $("#useHere").onclick = async () => { const b = $("#useHere"); b.disabled = true; const r = await api("redeem_at", { store_id: s.id }); b.disabled = false; showResult(r); };
 }
 
 function showResult(r){
@@ -323,7 +362,7 @@ function showResult(r){
   if (r.ok) {
     el.innerHTML = `<div class="mark ok">${ICON.check}</div><div class="amt">-${won(r.discount_krw)}</div><div class="st">${esc(r.store)}</div>
       <div class="tm">할인 적용 완료 · <span id="live" style="font-variant-numeric:tabular-nums;font-weight:600;color:var(--g900)"></span></div>
-      <div class="show">계산할 때 이 화면을 사장님께 보여주세요</div>
+      <div class="show">사장님께 이 화면을 보여주세요</div>
       <div class="cnt"><span id="c">30</span>초 후 자동으로 닫혀요</div><button class="btn">확인</button>`;
   } else {
     el.innerHTML = `<div class="mark bad">${ICON.x}</div><div class="st">할인을 적용할 수 없어요</div><div class="tm">${esc(r.reason)}</div><button class="btn sub2">확인</button>`;

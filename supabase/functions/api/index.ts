@@ -209,6 +209,13 @@ async function redeem(u: any, b: { secret?: string }) {
   return judgeAndRedeem(u, s);
 }
 
+// 기록 방식: 매장 선택만 (위치 판정 없음, 초기 운영용)
+async function redeemAt(u: any, b: { store_id?: string }) {
+  if (!b.store_id) return fail("식당을 선택해 주세요");
+  const { data: s } = await db.from("stores").select(STORE_SEL).eq("id", b.store_id).maybeSingle();
+  return judgeAndRedeem(u, s);
+}
+
 // 위치 방식: 매장 150m 이내
 async function redeemHere(u: any, b: { store_id?: string; lat?: number; lng?: number; accuracy?: number }) {
   if (!b.store_id || typeof b.lat !== "number" || typeof b.lng !== "number") return fail("위치를 확인할 수 없어요. 위치 권한을 허용해 주세요");
@@ -304,6 +311,7 @@ Deno.serve(async (req) => {
     case "stores": return stores(u);
     case "redeem": return redeem(u, b);
     case "redeem_here": return redeemHere(u, b);
+    case "redeem_at": return redeemAt(u, b);
     case "history": return history(u);
     case "billing_issue": return billingIssue(u, b);
     case "billing_remove": return billingRemove(u);
