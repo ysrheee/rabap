@@ -286,9 +286,8 @@ async function pageHome(){
       <div class="date">${dateStr}</div>
       <div class="pill">${pill}</div>
     </div>
-    <p class="mt16" style="padding:0 4px;font-size:15px;font-weight:600;color:var(--g800)">${me.used_today ? "오늘 할인은 사용 완료" : !me.membership?.live ? "멤버십을 다시 시작해 주세요" : me.in_window ? "계산할 때 사장님께 라밥 멤버십 뱃지를 보여주세요" : "할인 시간에 사장님께 라밥 멤버십 뱃지를 보여주세요"}</p>
     <p class="cap mt8" style="padding:0 4px">${hint}</p>
-    ${canUse ? `<button class="btn mt16" id="useBtn">사용 기록하고 3,000원 할인받기</button><p class="cap center mt8">식당을 고르면 확인 화면이 떠요. 그 화면을 사장님께 보여주세요</p>` : ""}
+    ${canUse ? `<button class="btn mt16" id="useBtn">사용 기록하고 3,000원 할인받기</button><p class="cap center mt8">계산 직전에 누르고, 확인 화면을 사장님께 보여주세요</p>` : ""}
     ${banner}
     <h2>제휴 식당 <span class="cap" style="font-weight:500">${(st.stores||[]).length}</span></h2>
     <div class="seg"><button id="segList">목록</button><button id="segMap">지도</button></div>
