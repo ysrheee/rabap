@@ -96,10 +96,17 @@ p{margin:0}
 .mark.bad{background:var(--g100)}
 .mark svg{width:44px;height:44px;stroke:#fff;fill:none;stroke-width:3.2;stroke-linecap:round;stroke-linejoin:round}
 .mark.bad svg{stroke:var(--g600)}
-.minicard{display:inline-flex;align-items:center;gap:10px;background:linear-gradient(120deg,var(--brand),#FF8F5E);color:#fff;border-radius:14px;padding:10px 16px;margin-bottom:22px;box-shadow:0 4px 14px rgba(255,107,53,.3)}
-.minicard .b{font-size:12px;font-weight:800;opacity:.95;letter-spacing:-.01em}
-.minicard .p{font-size:17px;font-weight:800;font-variant-numeric:tabular-nums}
-.minicard .v{font-size:11px;background:rgba(255,255,255,.25);border-radius:999px;padding:3px 8px;font-weight:700}
+.minicard{position:relative;overflow:hidden;isolation:isolate;-webkit-mask-image:-webkit-radial-gradient(white,black);width:100%;max-width:340px;text-align:left;background:linear-gradient(120deg,var(--brand),#FF8F5E 45%,#FFB08A);color:#fff;border-radius:18px;padding:16px 18px;margin-bottom:18px;box-shadow:0 6px 18px rgba(255,107,53,.3)}
+.minicard::after{content:"";position:absolute;top:0;bottom:0;left:0;width:60%;background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.4) 50%,transparent 70%);animation:sheen 2.2s linear infinite;pointer-events:none}
+.minicard>*{position:relative;z-index:1}
+.minicard .b{font-size:12px;font-weight:800;opacity:.95;display:flex;justify-content:space-between;align-items:center}
+.minicard .b .v{font-size:11px;background:rgba(255,255,255,.25);border-radius:999px;padding:3px 8px}
+.minicard .p{font-size:22px;font-weight:800;font-variant-numeric:tabular-nums;margin-top:8px}
+.minicard .s{font-size:12px;opacity:.9;margin-top:2px}
+.result .clock{font-size:38px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-.02em;color:var(--g900);line-height:1.1}
+.result .meta{display:flex;gap:8px;justify-content:center;margin-top:14px;flex-wrap:wrap}
+.result .meta span{background:var(--g100);border-radius:10px;padding:8px 12px;font-size:13px;font-weight:700;color:var(--g800)}
+.result .meta b{color:var(--brand)}
 .result .amt{font-size:40px;font-weight:800;letter-spacing:-.03em;color:var(--g900);line-height:1.1}
 .result .st{font-size:22px;font-weight:700;margin-top:10px}
 .result .tm{font-size:15px;color:var(--g600);margin-top:8px;line-height:1.5}
@@ -383,9 +390,11 @@ async function pageStore(id){
 function showResult(r){
   const el = document.createElement("div"); el.className = "result";
   if (r.ok) {
-    el.innerHTML = `<div class="minicard"><span class="b">라밥 멤버십</span><span class="p">${esc(r.phone_masked || "")}</span><span class="v">회원</span></div><div class="mark ok">${ICON.check}</div><div class="amt">-${won(r.discount_krw)}</div><div class="st">${esc(r.store)}</div>
-      <div class="tm">할인 적용 완료 · <span id="live" style="font-variant-numeric:tabular-nums;font-weight:600;color:var(--g900)"></span></div>
-      <div class="show">사장님께 이 화면을 보여주세요</div>
+    el.innerHTML = `<div class="minicard"><div class="b"><span>라밥 멤버십</span><span class="v">회원 · ${esc(r.member_since || "")} 가입</span></div><div class="p">${esc(r.phone_masked || "")}</div><div class="s">사장님, 이 카드의 빛이 움직이면 정상이에요</div></div>
+      <div class="clock" id="live">--:--:--</div>
+      <div class="amt" style="margin-top:6px">-${won(r.discount_krw)}</div><div class="st">${esc(r.store)}</div>
+      <div class="meta"><span>오늘 이 식당 <b>${r.seq || 1}번째</b> 사용</span><span>사용번호 <b>${esc(r.code || "")}</b></span></div>
+      <div class="show">계산 금액에서 3,000원 빼주세요</div>
       <div class="cnt"><span id="c">30</span>초 후 자동으로 닫혀요</div><button class="btn">확인</button>`;
   } else {
     el.innerHTML = `<div class="mark bad">${ICON.x}</div><div class="st">할인을 적용할 수 없어요</div><div class="tm">${esc(r.reason)}</div><button class="btn sub2">확인</button>`;

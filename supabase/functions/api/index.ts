@@ -199,7 +199,9 @@ async function judgeAndRedeem(u: any, s: any) {
   const { data: r, error } = await db.from("redemptions")
     .insert({ user_id: u.id, store_id: s.id, discount_krw: s.discount_krw, redeemed_date: d }).select().single();
   if (error) return fail(error.code === "23505" ? "오늘은 이미 사용했어요. 하루 1회만 가능" : "처리 오류: " + error.message, 500);
-  return json({ ok: true, store: s.name, discount_krw: s.discount_krw, at: r.redeemed_at, now: t.slice(0, 5), phone_masked: u.phone.slice(0, 3) + "-****-" + u.phone.slice(-4) });
+  const { count: seq } = await db.from("redemptions").select("id", { count: "exact", head: true }).eq("store_id", s.id).eq("redeemed_date", d);
+  return json({ ok: true, store: s.name, discount_krw: s.discount_krw, at: r.redeemed_at, now: t.slice(0, 5), phone_masked: u.phone.slice(0, 3) + "-****-" + u.phone.slice(-4),
+    code: r.id.replace(/-/g, "").slice(-4).toUpperCase(), seq: seq ?? 1, member_since: (u.created_at || "").slice(0, 10).replace(/-/g, ".") });
 }
 
 // QR 방식
