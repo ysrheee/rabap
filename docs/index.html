@@ -509,7 +509,7 @@ async function pageHistory(){
       : `${m?.card ? `<button class="btn sub2 mt16" id="rmCard">카드 변경</button>` : `<button class="btn mt16" id="addCard">결제 카드 등록</button><p class="cap center mt8">등록해 두면 무료가 끝나도 끊기지 않아요. 지금은 결제되지 않아요.</p>`}
          <button class="btn line mt8" id="cancel" style="color:var(--g500)">멤버십 해지</button>`}
     <a class="btn sub2 mt24" href="${CHAT_URL}" target="_blank">문의·건의는 라밥 라이더 오픈채팅</a>
-    <p class="cap center mt16"><a href="terms.html" style="color:var(--g500)">이용약관</a> · <a href="privacy.html" style="color:var(--g500)">개인정보처리방침</a> · yslee@doeat.io</p>
+    <p class="cap center mt16"><a href="terms.html" style="color:var(--g500)">이용약관</a> · <a href="privacy.html" style="color:var(--g500)">개인정보처리방침</a> · <a href="${CHAT_URL}" target="_blank" style="color:var(--g500)">문의 오픈채팅</a></p>
   </div>${nav("/history")}`;
   const bind = (id, fn) => { const el = $(id); if (el) el.onclick = fn; };
   bind("#addCard", () => registerCard(me));
