@@ -6,7 +6,10 @@ KST=dt.timezone(dt.timedelta(hours=9)); now=dt.datetime.now(KST); today=now.date
 def rest(path):
     req=urllib.request.Request(f"{URL}/rest/v1/{path}", headers={"apikey":KEY,"Authorization":f"Bearer {KEY}"})
     return json.loads(urllib.request.urlopen(req).read().decode())
-def k(ts): return dt.datetime.fromisoformat(re.sub(r"(\.\d{6})\d*", r"\1", ts).replace("Z","+00:00")).astimezone(KST)
+def k(ts):
+    ts=ts.replace("Z","+00:00"); m=re.match(r"(.*)\.(\d+)([+-]\d\d:\d\d)$", ts)
+    if m: ts=f"{m.group(1)}.{m.group(2)[:6].ljust(6,chr(48))}{m.group(3)}"
+    return dt.datetime.fromisoformat(ts).astimezone(KST)
 OWNER="01065514388"
 users=[u for u in rest("users?select=id,phone,created_at,invite_code_used&order=created_at") if u["phone"]!=OWNER]
 uid={u["id"]:u for u in users}
