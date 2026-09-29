@@ -293,7 +293,7 @@ async function pageHome(){
     ${me.membership?.status === "past_due" ? `<a class="sec" href="#/history" style="display:flex;align-items:center;gap:12px;text-decoration:none;color:inherit;padding:14px 16px;background:var(--red-tint)"><div class="ic">⚠️</div><div style="flex:1"><div style="font-weight:700;color:var(--red)">결제에 실패했어요</div><div class="cap">3일 안에 결제수단을 확인하지 않으면 멤버십이 종료돼요</div></div><span class="chev">${ICON.chev}</span></a>` : ""}
     ${(() => { const standalone = window.matchMedia("(display-mode: standalone)").matches || navigator.standalone; if (standalone || localStorage.getItem("rabap_a2hs")) return ""; const ios = /iPhone|iPad/.test(navigator.userAgent); return `<div class="sec" style="display:flex;align-items:center;gap:12px;padding:12px 16px;margin-top:12px"><div class="ic">📲</div><div style="flex:1;font-size:13px;color:var(--g700)">앱처럼 쓰려면 <b>${ios ? "공유 버튼 → 홈 화면에 추가" : "메뉴(⋮) → 홈 화면에 추가"}</b></div><button id="a2hsClose" style="border:0;background:none;color:var(--g400);font-size:18px">×</button></div>`; })()}
     ${banner}
-    <h2>제휴 식당 <span class="cap" style="font-weight:500">${(st.stores||[]).length}</span></h2>
+    <h2>3천원 할인되는 제휴 식당 <span class="cap" style="font-weight:500">(${(st.stores||[]).length}개 매장)</span></h2>
     <div class="seg"><button id="segList">목록</button><button id="segMap">지도</button></div>
     <div id="viewList" class="list">${rows || `<div class="empty">제휴 식당을 준비하고 있어요</div>`}</div>
     <div id="viewMap" style="display:none"><div id="map"></div><p class="cap center mt8">핀을 누르면 식당 정보가 보여요</p></div>
@@ -369,7 +369,7 @@ function renderMap(stores){
   }
   const pts = stores.filter(s => s.lat && s.lng);
   pts.forEach(s => {
-    const short = s.name.replace(/\s*(서울대입구역?점|봉천점|신림점|낙성대점|관악점|관악본점|본점)$/, "");
+    const short = s.name.replace(/\s*(서울대입구역?점|서울대점|봉천점|신림점|낙성대점|관악점|관악본점|본점|관악봉천점)$/, "").replace(/\s*(생선조림 한식전문점|한식전문점)$/, "").replace(/^153/, "");
     const icon = L.divIcon({ className: "", html: `<div class="pinwrap"><div class="pin ${s.open_now?"":"off"}"><span>🍚</span></div><div class="pinlbl ${s.open_now?"":"off"}">${esc(short)}</div></div>`, iconSize: [34, 34], iconAnchor: [17, 34], popupAnchor: [0, -34] });
     L.marker([s.lat, s.lng], { icon }).addTo(map)
       .bindPopup(`<b>${esc(s.name)}</b><br><span style="color:#6B7684">${s.closed_today ? "오늘 휴무" : s.open_now ? "영업 중" : "영업시간 아님"} · 3,000원 할인 (${won(s.min_order_krw || 8000)} 이상)</span><br><a href="#/store/${s.id}">자세히 보기 ›</a>`);
