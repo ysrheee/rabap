@@ -268,7 +268,7 @@ async function pageHome(){
   let cls = "", pill = "", hint = "";
   if (me.used_today) { cls = "done"; pill = "내일 다시 사용 가능"; hint = `오늘 ${esc(me.used_today.store)}에서 사용했어요 · 내일 14:00부터`; }
   else if (!me.membership?.live) { cls = "off"; pill = "무료 기간 종료"; hint = "친구를 초대하면 1주 더 쓸 수 있어요 · 문의는 내역 탭 오픈채팅"; }
-  else if (me.in_window) { cls = ""; pill = "● 지금 3,000원 할인 가능"; hint = "할인 시간 14:00~17:00 · 8,000원 이상 주문 시 · 하루 1회"; }
+  else if (me.in_window) { cls = ""; pill = "● 할인 시간 · 아래 버튼을 눌러 받으세요"; hint = "할인 시간 14:00~17:00 · 8,000원 이상 주문 시 · 하루 1회"; }
   else { cls = "off"; pill = me.next_window ? `${me.next_window}부터 할인 가능` : "오늘 할인 시간 종료"; hint = "할인 시간 14:00~17:00 · 8,000원 이상 주문 시"; }
   const canUse = me.membership?.live && me.in_window && !me.used_today;
   const daysLeft = me.membership ? Math.ceil((new Date(me.membership.period_end) - Date.now()) / 86400000) : 99;
@@ -288,7 +288,7 @@ async function pageHome(){
       <div class="pill">${pill}</div>
     </div>
     <p class="cap mt8" style="padding:0 4px">${hint}</p>
-    ${canUse ? `<button class="btn mt16" id="useBtn">사용 기록하고 3,000원 할인받기</button><p class="cap center mt8">계산 직전에 누르고, 확인 화면을 사장님께 보여주세요</p>` : ""}
+    ${canUse ? `<button class="btn mt16" id="useBtn">3,000원 할인받기</button><p class="cap center mt8">계산 직전에 누르면 확인 화면이 떠요. 사장님은 그 화면만 인정해요</p>` : ""}
     ${!me.membership?.live ? `<a class="btn mt16" href="#/invite">친구 초대하고 1주 더 쓰기</a><a class="btn sub2 mt8" href="#/history">월 3,000원으로 계속하기</a>` : ""}
     ${me.membership?.status === "past_due" ? `<a class="sec" href="#/history" style="display:flex;align-items:center;gap:12px;text-decoration:none;color:inherit;padding:14px 16px;background:var(--red-tint)"><div class="ic">⚠️</div><div style="flex:1"><div style="font-weight:700;color:var(--red)">결제에 실패했어요</div><div class="cap">3일 안에 결제수단을 확인하지 않으면 멤버십이 종료돼요</div></div><span class="chev">${ICON.chev}</span></a>` : ""}
     ${(() => { const standalone = window.matchMedia("(display-mode: standalone)").matches || navigator.standalone; if (standalone || localStorage.getItem("rabap_a2hs")) return ""; const ios = /iPhone|iPad/.test(navigator.userAgent); return `<div class="sec" style="display:flex;align-items:center;gap:12px;padding:12px 16px;margin-top:12px"><div class="ic">📲</div><div style="flex:1;font-size:13px;color:var(--g700)">앱처럼 쓰려면 <b>${ios ? "공유 버튼 → 홈 화면에 추가" : "메뉴(⋮) → 홈 화면에 추가"}</b></div><button id="a2hsClose" style="border:0;background:none;color:var(--g400);font-size:18px">×</button></div>`; })()}
@@ -414,7 +414,7 @@ async function pageStore(id){
     </div>
     <div style="height:88px"></div>
   </div>
-  <div class="cta"><button class="btn" id="useHere">사용 기록하고 3,000원 할인받기</button></div>`;
+  <div class="cta"><button class="btn" id="useHere">3,000원 할인받기</button></div>`;
   $("#useHere").onclick = async () => { const b = $("#useHere"); b.disabled = true; await useAt(s, null); b.disabled = false; };
 }
 
