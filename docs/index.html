@@ -156,7 +156,7 @@ p{margin:0}
 <script src="https://js.tosspayments.com/v2/standard"></script>
 <script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.4/kakao.min.js" integrity="sha384-DKYJZ8NLiK8MN4/C5P2dtSmLQ4KwPaoqAfyA/DfmEc1VDxu4yyC7wy6K1Hs90nka" crossorigin="anonymous"></script>
 <script>
-const BUILD = "20260930190329";
+const BUILD = "20260930191339";
 const API = "https://zthrcavaccgtvsyffpeh.supabase.co/functions/v1/api";
 const TOSS_CLIENT_KEY = "test_ck_Z1aOwX7K8mBqgaxkbdAP3yQxzvNP";
 const CHAT_URL = "https://open.kakao.com/o/ssiAtQPi";
@@ -280,7 +280,7 @@ async function pageHome(){
   const rows = (st.stores || []).map(s => `<a class="row" href="#/store/${s.id}">
       <div class="ic ${s.open_now?"on":""}">🍚</div>
       <div class="t"><div class="n">${esc(s.name)}</div>
-      <div class="m">${s.closed_today ? "오늘 휴무" : s.open_now ? "영업 중" : "영업시간 아님"}${s.menu_note ? " · " + esc(s.menu_note) : ""}</div></div>
+      <div class="m">${s.closed_today ? "오늘 휴무" : s.open_now ? "영업 중" : "영업시간 아님"}${s.window ? ` · 할인 ${s.window[0]}~${s.window[1]}` : ""}${s.menu_note ? " · " + esc(s.menu_note) : ""}</div></div>
       <div style="text-align:right;flex:none"><div class="r">3,000원 할인</div><div class="cap" style="font-size:11px">${won(s.min_order_krw || 8000)} 이상</div></div><span class="chev">${ICON.chev}</span></a>`).join("");
   const state = me.used_today ? "done" : !me.membership?.live ? "off" : me.in_window ? "on" : "wait";
   const bigTitle = state === "on" ? "지금 할인 시간이에요" : state === "wait" ? (me.next_window ? `${me.next_window}부터 할인 시간` : "오늘 할인 시간은 끝났어요") : state === "done" ? "오늘 할인은 사용했어요" : "무료 기간이 끝났어요";
@@ -385,7 +385,7 @@ async function pageStore(id){
       <div class="kv"><span class="k">대표 메뉴</span><span class="v">${esc(s.menu_note || "-")}</span></div>
       <div class="kv"><span class="k">오늘 영업</span><span class="v">${s.today_hours.length ? s.today_hours.map(h=>h.join("~")).join("<br>") : "휴무"}</span></div>
       ${(s.closed_days||[]).length && s.closed_days.length < 7 ? `<div class="kv"><span class="k">정기휴무</span><span class="v">${s.closed_days.map(d=>"일월화수목금토"[d]).join("·")}요일</span></div>` : ""}
-      <div class="kv"><span class="k">할인 시간</span><span class="v">14:00~17:00</span></div>
+      <div class="kv"><span class="k">할인 시간</span><span class="v">${s.window ? s.window.join("~") : "14:00~17:00"}</span></div>
     </div>
     <div style="display:flex;gap:10px" class="mt16">
       <a class="btn line" href="${naver}" target="_blank">길찾기</a>

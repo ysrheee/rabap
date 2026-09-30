@@ -168,7 +168,7 @@ async function me(u: any, req?: Request, build?: string) {
 
 async function stores(_u: any) {
   const now = kstNow(); const t = kstTime(now); const wd = kstWeekday(now);
-  const { data: list } = await db.from("stores").select("id,name,address,lat,lng,phone,menu_note,naver_url,discount_krw,min_order_krw, store_hours(weekday,open_time,close_time)")
+  const { data: list } = await db.from("stores").select("id,name,address,lat,lng,phone,menu_note,naver_url,discount_krw,min_order_krw,window_start,window_end, store_hours(weekday,open_time,close_time)")
     .eq("is_active", true).order("name");
   const out = (list ?? []).map((s: any) => {
     const hours = (s.store_hours ?? []).filter((h: any) => h.weekday === wd)
@@ -177,7 +177,9 @@ async function stores(_u: any) {
     const days = new Set((s.store_hours ?? []).map((h: any) => h.weekday));
     const closed_days = [0,1,2,3,4,5,6].filter((d) => !days.has(d));
     const { store_hours: _h, ...rest } = s;
-    return { ...rest, today_hours: hours, open_now, closed_today: hours.length === 0, closed_days };
+    const win = (s.window_start && s.window_end) ? [s.window_start.slice(0,5), s.window_end.slice(0,5)] : null;
+    const win_now = win ? inRange(t, s.window_start, s.window_end) : null;
+    return { ...rest, today_hours: hours, open_now, closed_today: hours.length === 0, closed_days, window: win, window_now: win_now };
   });
   return json({ ok: true, stores: out });
 }
@@ -187,15 +189,15 @@ function distM(a: number, b: number, c: number, d: number) {
   const h = Math.sin(dLat / 2) ** 2 + Math.cos(a * p) * Math.cos(c * p) * Math.sin(dLng / 2) ** 2;
   return 2 * R * Math.asin(Math.sqrt(h));
 }
-const STORE_SEL = "id,name,lat,lng,discount_krw,is_active, store_hours(weekday,open_time,close_time)";
+const STORE_SEL = "id,name,lat,lng,discount_krw,is_active,window_start,window_end, store_hours(weekday,open_time,close_time)";
 
 async function judgeAndRedeem(u: any, s: any) {
   const now = kstNow(); const t = kstTime(now); const d = kstDate(now); const wd = kstWeekday(now);
   const m = await membership(u.id);
   if (!m?.live) return fail("멤버십이 만료되었어요");
-  const ws = await windows();
-  if (!windowNow(ws, t)) { const n = nextWindow(ws, t); return fail(n ? `지금은 할인 시간이 아니에요. ${n}부터 가능` : "오늘 할인 시간이 끝났어요. 내일 14:00부터"); }
   if (!s || !s.is_active) return fail("등록되지 않은 매장이에요");
+  const ws = (s.window_start && s.window_end) ? [{ start_time: s.window_start, end_time: s.window_end }] : await windows();
+  if (!windowNow(ws, t)) { const n = nextWindow(ws, t); return fail(n ? `${s.name}은(는) ${n}부터 할인 가능해요` : `${s.name}은(는) 오늘 할인 시간이 끝났어요`); }
   const open = (s.store_hours ?? []).some((h: any) => h.weekday === wd && inRange(t, h.open_time, h.close_time));
   if (!open) return fail(`${s.name}은(는) 지금 영업시간이 아니에요`);
   if (await todayRedemption(u.id, d)) return fail("오늘은 이미 사용했어요. 하루 1회만 가능");
