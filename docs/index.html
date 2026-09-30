@@ -156,7 +156,7 @@ p{margin:0}
 <script src="https://js.tosspayments.com/v2/standard"></script>
 <script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.4/kakao.min.js" integrity="sha384-DKYJZ8NLiK8MN4/C5P2dtSmLQ4KwPaoqAfyA/DfmEc1VDxu4yyC7wy6K1Hs90nka" crossorigin="anonymous"></script>
 <script>
-const BUILD = "20260930183807";
+const BUILD = "20260930190329";
 const API = "https://zthrcavaccgtvsyffpeh.supabase.co/functions/v1/api";
 const TOSS_CLIENT_KEY = "test_ck_Z1aOwX7K8mBqgaxkbdAP3yQxzvNP";
 const CHAT_URL = "https://open.kakao.com/o/ssiAtQPi";
@@ -216,7 +216,7 @@ const topbar = (href="#/") => `<div class="top"><a class="back" href="${href}">$
 
 // ---------- 화면 ----------
 function visitorId(){ let v = localStorage.getItem("rabap_vis"); if (!v) { v = crypto.randomUUID(); localStorage.setItem("rabap_vis", v); } return v; }
-function track(event, code){ try { const k = "rabap_tr_" + event + "_" + (code || ""); if (sessionStorage.getItem(k)) return; sessionStorage.setItem(k, "1"); fetch(API, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "track", event, code, visitor: visitorId() }) }); } catch {} }
+function track(event, code){ try { const k = "rabap_tr_" + event + "_" + (code || ""); if (!/share|copy/.test(event)) { if (sessionStorage.getItem(k)) return; sessionStorage.setItem(k, "1"); } fetch(API, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "track", event, code, visitor: visitorId() }) }); } catch {} }
 function pageJoin(q){
   const inviteFromLink = q.get("code") || "";
   track(inviteFromLink ? "invite_open" : "join_view", inviteFromLink);
@@ -456,7 +456,9 @@ async function pageInvite(){
     <button class="btn mt16" id="share">${KAKAO_JS_KEY ? "카카오톡으로 초대하기" : "초대 링크 보내기"}</button>
     <button class="btn sub2 mt8" id="copy">링크 복사</button>
   </div>${nav("/invite")}`;
+  track("invite_view", inv.code);
   $("#share").onclick = async () => {
+    track("invite_share", inv.code);
     if (KAKAO_JS_KEY && window.Kakao?.isInitialized()) { // 카톡 직접 열기
       try { Kakao.Share.sendDefault({ objectType: "text", text: msg.replace(link, "").trim(), link: { mobileWebUrl: link, webUrl: link }, buttonTitle: "라밥 시작하기" }); return; } catch {}
     }
