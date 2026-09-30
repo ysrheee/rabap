@@ -142,8 +142,8 @@ async function verify(b: { phone?: string; otp?: string; code?: string }) {
   return createUser(phone, code);
 }
 
-async function me(u: any) {
-  db.from("events").insert({ event: "app_open", user_id: u.id }).then(() => {}); // 접속 기록 (응답 대기 안 함)
+async function me(u: any, req?: Request) {
+  db.from("events").insert({ event: "app_open", user_id: u.id, ua: (req?.headers.get("user-agent") || "").slice(0, 200) }).then(() => {}); // 접속 기록
   const now = kstNow(); const t = kstTime(now); const d = kstDate(now);
   const ws = await windows();
   const [m, today, inv, cnt] = await Promise.all([
@@ -328,7 +328,7 @@ Deno.serve(async (req) => {
   const u = await auth(b.token);
   if (!u) return fail("로그인이 필요합니다", 401);
   switch (b.action) {
-    case "me": return me(u);
+    case "me": return me(u, req);
     case "stores": return stores(u);
     case "redeem": return redeem(u, b);
     case "redeem_here": return redeemHere(u, b);
