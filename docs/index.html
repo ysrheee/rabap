@@ -156,7 +156,7 @@ p{margin:0}
 <script src="https://js.tosspayments.com/v2/standard"></script>
 <script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.4/kakao.min.js" integrity="sha384-DKYJZ8NLiK8MN4/C5P2dtSmLQ4KwPaoqAfyA/DfmEc1VDxu4yyC7wy6K1Hs90nka" crossorigin="anonymous"></script>
 <script>
-const BUILD = "20260930120212";
+const BUILD = "20260930183807";
 const API = "https://zthrcavaccgtvsyffpeh.supabase.co/functions/v1/api";
 const TOSS_CLIENT_KEY = "test_ck_Z1aOwX7K8mBqgaxkbdAP3yQxzvNP";
 const CHAT_URL = "https://open.kakao.com/o/ssiAtQPi";
@@ -169,7 +169,7 @@ const won = (n) => Number(n).toLocaleString("ko-KR") + "원";
 const store = { get token(){ return localStorage.getItem("rabap_token"); }, set token(v){ v ? localStorage.setItem("rabap_token", v) : localStorage.removeItem("rabap_token"); } };
 function deviceId(){ let d = localStorage.getItem("rabap_dev"); if(!d){ d = crypto.randomUUID(); localStorage.setItem("rabap_dev", d); } return d; }
 async function api(action, body={}){
-  const r = await fetch(API, { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ action, token: store.token, ...body }) });
+  const r = await fetch(API, { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ action, token: store.token, build: BUILD, ...body }) });
   const j = await r.json().catch(() => ({ ok:false, reason:"서버 응답 오류" }));
   if (r.status === 401) { store.token = null; go("/join"); }
   return j;
