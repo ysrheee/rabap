@@ -156,6 +156,7 @@ p{margin:0}
 <script src="https://js.tosspayments.com/v2/standard"></script>
 <script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.4/kakao.min.js" integrity="sha384-DKYJZ8NLiK8MN4/C5P2dtSmLQ4KwPaoqAfyA/DfmEc1VDxu4yyC7wy6K1Hs90nka" crossorigin="anonymous"></script>
 <script>
+const BUILD = "20260930120212";
 const API = "https://zthrcavaccgtvsyffpeh.supabase.co/functions/v1/api";
 const TOSS_CLIENT_KEY = "test_ck_Z1aOwX7K8mBqgaxkbdAP3yQxzvNP";
 const CHAT_URL = "https://open.kakao.com/o/ssiAtQPi";
@@ -516,6 +517,14 @@ async function render(){
 }
 window.addEventListener("hashchange", render);
 render();
+// 새 배포가 있으면 캐시를 건너뛰고 다시 불러오기
+(async () => { try {
+  const r = await fetch("version.json?t=" + Date.now(), { cache: "no-store" }); const j = await r.json();
+  if (j.build && j.build !== BUILD && !sessionStorage.getItem("rabap_reloaded_" + j.build)) {
+    sessionStorage.setItem("rabap_reloaded_" + j.build, "1");
+    location.replace(location.pathname + "?v=" + j.build + location.hash);
+  }
+} catch {} })();
 </script>
 </body>
 </html>
