@@ -156,11 +156,12 @@ p{margin:0}
 <script src="https://js.tosspayments.com/v2/standard"></script>
 <script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.4/kakao.min.js" integrity="sha384-DKYJZ8NLiK8MN4/C5P2dtSmLQ4KwPaoqAfyA/DfmEc1VDxu4yyC7wy6K1Hs90nka" crossorigin="anonymous"></script>
 <script>
-const BUILD = "20261001172909";
+const BUILD = "20261001173011";
 const API = "https://zthrcavaccgtvsyffpeh.supabase.co/functions/v1/api";
 const TOSS_CLIENT_KEY = "test_ck_Z1aOwX7K8mBqgaxkbdAP3yQxzvNP";
 const CHAT_URL = "https://open.kakao.com/o/ssiAtQPi";
-const KAKAO_JS_KEY = ""; // 동원님에게 받으면 입력 → 카톡 직접 열림
+const KAKAO_JS_KEY = "";
+const VAPID_PUBLIC_KEY = "BAKVED0yp1bZCovmr42vdTvzAyDVAJDuwyFgsYaEc6T5JdmE79QdcOknrWvn62nRz2s6IEgo2qDeZlQdgOtmWLY"; // 동원님에게 받으면 입력 → 카톡 직접 열림
 try { if (KAKAO_JS_KEY && window.Kakao && !Kakao.isInitialized()) Kakao.init(KAKAO_JS_KEY); } catch {}
 const $ = (s) => document.querySelector(s);
 const app = $("#app");
@@ -179,6 +180,19 @@ function route(){ const h = location.hash.replace(/^#/, "") || "/"; const [path,
 let scanner = null;
 async function stopScanner(){ if (scanner) { try { await scanner.stop(); scanner.clear(); } catch {} scanner = null; } }
 const loading = () => `<div class="spin"><i></i></div>`;
+// ---- 웹 푸시
+const pushSupported = () => "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
+function b64ToU8(b){ const p = "=".repeat((4 - b.length % 4) % 4); const s = (b + p).replace(/-/g, "+").replace(/_/g, "/"); const r = atob(s); return Uint8Array.from([...r].map(c => c.charCodeAt(0))); }
+async function pushStatus(){ if (!pushSupported()) return "unsupported"; if (Notification.permission === "denied") return "denied"; try { const reg = await navigator.serviceWorker.getRegistration("./"); const sub = reg && await reg.pushManager.getSubscription(); return sub ? "on" : "off"; } catch { return "off"; } }
+async function enablePush(){
+  try {
+    const reg = await navigator.serviceWorker.register("sw.js", { scope: "./" });
+    const perm = await Notification.requestPermission(); if (perm !== "granted") { toast("알림이 허용되지 않았어요"); return false; }
+    const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64ToU8(VAPID_PUBLIC_KEY) });
+    const r = await api("push_subscribe", { subscription: sub.toJSON() }); if (r.ok) toast("매일 13:50에 알려드릴게요"); return r.ok;
+  } catch (e) { toast("알림 설정 실패: " + (e?.message || e)); return false; }
+}
+async function disablePush(){ try { const reg = await navigator.serviceWorker.getRegistration("./"); const sub = reg && await reg.pushManager.getSubscription(); if (sub) { await api("push_unsubscribe", { endpoint: sub.endpoint }); await sub.unsubscribe(); } toast("알림을 껐어요"); } catch {} }
 function toast(msg){ const t = document.createElement("div"); t.textContent = msg; t.style.cssText = "position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom));transform:translateX(-50%);background:#191F28;color:#fff;padding:12px 18px;border-radius:12px;font-size:14px;font-weight:600;z-index:99;max-width:90%;text-align:center"; document.body.appendChild(t); setTimeout(() => t.remove(), 2600); }
 async function registerCard(me){
   const customerKey = me.membership?.customer_key || crypto.randomUUID();
@@ -249,13 +263,13 @@ function pageJoin(q){
       busy(true, "확인 중…");
       const r = await api("start", { phone: phoneVal, code: codeVal });
       if (!r.ok) { $("#err").textContent = r.reason; busy(false, "시작하기"); return; }
-      if (r.token) { store.token = r.token; return go("/"); }
+      if (r.token) { store.token = r.token; sessionStorage.setItem("rabap_justjoined","1"); return go("/"); }
       if (r.mode === "direct" && r.is_new) { isNew = true; $("#codeWrap").style.display = ""; $("#err").textContent = "처음이시네요. 초대 코드를 입력해 주세요"; busy(false, "시작하기"); $("#code").focus(); return; }
       mode = r.mode; isNew = !!r.is_new; step = "otp"; draw(); return;
     }
     busy(true, "확인 중…");
     const r = await api("verify", { phone: phoneVal, otp: $("#otp").value, code: codeVal });
-    if (r.ok) { store.token = r.token; go("/"); } else { $("#err").textContent = r.reason; busy(false, "확인"); }
+    if (r.ok) { store.token = r.token; sessionStorage.setItem("rabap_justjoined","1"); go("/"); } else { $("#err").textContent = r.reason; busy(false, "확인"); }
   }
   draw();
 }
@@ -289,6 +303,7 @@ async function pageHome(){
     <div class="status" style="padding-top:20px"><span class="chip ${state==="on"?"on":state==="done"?"done":"off"}">${state==="on" ? '<i class="d"></i>할인 가능' : state==="done" ? "사용 완료" : state==="wait" ? "대기" : "만료"}</span><div class="big">${bigTitle}</div><p class="sub">${bigSub}</p></div>
     ${state === "on" ? `<button class="btn" id="useBtn" style="height:64px;font-size:19px;margin-top:8px">눌러서 3,000원 할인받기</button>` : state === "wait" ? `<button class="btn" disabled style="height:64px;font-size:19px;margin-top:8px">${me.next_window || "14:00"}부터 할인받기</button>` : ""}
     ${banner}
+    <div id="pushBox"></div>
     <h2>3천원 할인되는 제휴 식당 <span class="cap" style="font-weight:500">(${(st.stores||[]).length}개 매장)</span></h2>
     <div class="seg"><button id="segList">목록</button><button id="segMap">지도</button></div>
     <div id="viewList" class="list">${rows || `<div class="empty">제휴 식당을 준비하고 있어요</div>`}</div>
@@ -303,6 +318,13 @@ async function pageHome(){
   $("#segList").onclick = () => setView("list"); $("#segMap").onclick = () => setView("map");
   setView("map");
   const use = $("#useBtn"); if (use) use.onclick = () => quickUse(window._stores);
+  (async () => { const st = await pushStatus(); const box = $("#pushBox"); if (!box) return;
+    if (st === "unsupported") { const ios = /iPhone|iPad/.test(navigator.userAgent); if (ios && !(window.matchMedia("(display-mode: standalone)").matches || navigator.standalone)) box.innerHTML = `<div class="sec" style="padding:12px 16px;margin-top:12px;font-size:13px;color:var(--g700)">🔔 할인 시간 알림을 받으려면 <b>공유 → 홈 화면에 추가</b> 후 홈 화면 아이콘으로 열어주세요</div>`; return; }
+    if (st === "on") { box.innerHTML = `<div class="sec" style="display:flex;align-items:center;gap:12px;padding:12px 16px;margin-top:12px"><div class="ic on">🔔</div><div style="flex:1;font-size:13px;color:var(--g700)">매일 13:50 할인 시간 알림 <b>켜짐</b></div><button id="pushOff" class="undo" style="margin:0">끄기</button></div>`; $("#pushOff").onclick = async () => { await disablePush(); pageHome(); }; return; }
+    if (st === "denied") { box.innerHTML = `<div class="sec" style="padding:12px 16px;margin-top:12px;font-size:13px;color:var(--g700)">🔔 알림이 차단돼 있어요. 브라우저 설정에서 라밥 알림을 허용하면 매일 13:50에 알려드려요</div>`; return; }
+    const just = sessionStorage.getItem("rabap_justjoined"); if (just) sessionStorage.removeItem("rabap_justjoined");
+    box.innerHTML = `<button class="btn ${just ? "" : "sub2"} mt16" id="pushOn">🔔 할인 시간 알림 받기 (매일 13:50)</button>${just ? `<p class="cap center mt8">알림을 켜두면 점심 때 잊지 않아요</p>` : ""}`; $("#pushOn").onclick = async () => { if (await enablePush()) pageHome(); };
+  })();
   const a2 = $("#a2hsClose"); if (a2) a2.onclick = (e) => { localStorage.setItem("rabap_a2hs", "1"); e.target.closest(".sec").remove(); };
 }
 
