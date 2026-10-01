@@ -156,7 +156,7 @@ p{margin:0}
 <script src="https://js.tosspayments.com/v2/standard"></script>
 <script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.4/kakao.min.js" integrity="sha384-DKYJZ8NLiK8MN4/C5P2dtSmLQ4KwPaoqAfyA/DfmEc1VDxu4yyC7wy6K1Hs90nka" crossorigin="anonymous"></script>
 <script>
-const BUILD = "20261001173011";
+const BUILD = "20261001173158";
 const API = "https://zthrcavaccgtvsyffpeh.supabase.co/functions/v1/api";
 const TOSS_CLIENT_KEY = "test_ck_Z1aOwX7K8mBqgaxkbdAP3yQxzvNP";
 const CHAT_URL = "https://open.kakao.com/o/ssiAtQPi";
@@ -322,7 +322,8 @@ async function pageHome(){
     if (st === "unsupported") { const ios = /iPhone|iPad/.test(navigator.userAgent); if (ios && !(window.matchMedia("(display-mode: standalone)").matches || navigator.standalone)) box.innerHTML = `<div class="sec" style="padding:12px 16px;margin-top:12px;font-size:13px;color:var(--g700)">🔔 할인 시간 알림을 받으려면 <b>공유 → 홈 화면에 추가</b> 후 홈 화면 아이콘으로 열어주세요</div>`; return; }
     if (st === "on") { box.innerHTML = `<div class="sec" style="display:flex;align-items:center;gap:12px;padding:12px 16px;margin-top:12px"><div class="ic on">🔔</div><div style="flex:1;font-size:13px;color:var(--g700)">매일 13:50 할인 시간 알림 <b>켜짐</b></div><button id="pushOff" class="undo" style="margin:0">끄기</button></div>`; $("#pushOff").onclick = async () => { await disablePush(); pageHome(); }; return; }
     if (st === "denied") { box.innerHTML = `<div class="sec" style="padding:12px 16px;margin-top:12px;font-size:13px;color:var(--g700)">🔔 알림이 차단돼 있어요. 브라우저 설정에서 라밥 알림을 허용하면 매일 13:50에 알려드려요</div>`; return; }
-    const just = sessionStorage.getItem("rabap_justjoined"); if (just) sessionStorage.removeItem("rabap_justjoined");
+    const standaloneApp = window.matchMedia("(display-mode: standalone)").matches || navigator.standalone || document.referrer.startsWith("android-app://");
+    const just = sessionStorage.getItem("rabap_justjoined") || (standaloneApp && !localStorage.getItem("rabap_push_asked")); if (just) { sessionStorage.removeItem("rabap_justjoined"); localStorage.setItem("rabap_push_asked", "1"); }
     box.innerHTML = `<button class="btn ${just ? "" : "sub2"} mt16" id="pushOn">🔔 할인 시간 알림 받기 (매일 13:50)</button>${just ? `<p class="cap center mt8">알림을 켜두면 점심 때 잊지 않아요</p>` : ""}`; $("#pushOn").onclick = async () => { if (await enablePush()) pageHome(); };
   })();
   const a2 = $("#a2hsClose"); if (a2) a2.onclick = (e) => { localStorage.setItem("rabap_a2hs", "1"); e.target.closest(".sec").remove(); };
