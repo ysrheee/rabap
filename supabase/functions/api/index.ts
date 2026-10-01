@@ -1,5 +1,6 @@
 // 라밥 API — 모든 판정은 여기서만. 앱은 결과만 표시.
 import { createClient } from "npm:@supabase/supabase-js@2";
+import webpush from "npm:web-push@3.6.7";
 
 const db = createClient(
   Deno.env.get("SUPABASE_URL")!,
@@ -314,12 +315,38 @@ async function billingRun(req: Request) {
   return json({ ok: true, processed: out.length, out });
 }
 
+// ---------- 웹 푸시 ----------
+const VAPID_PUB = Deno.env.get("VAPID_PUBLIC_KEY") || ""; const VAPID_PRIV = Deno.env.get("VAPID_PRIVATE_KEY") || "";
+if (VAPID_PUB && VAPID_PRIV) webpush.setVapidDetails(Deno.env.get("VAPID_SUBJECT") || "mailto:yslee@doeat.io", VAPID_PUB, VAPID_PRIV);
+async function pushSubscribe(u: any, b: any, req: Request) {
+  const sub = b.subscription; if (!sub?.endpoint || !sub?.keys?.p256dh || !sub?.keys?.auth) return fail("구독 정보가 없어요");
+  await db.from("push_subs").upsert({ user_id: u.id, endpoint: sub.endpoint, p256dh: sub.keys.p256dh, auth: sub.keys.auth, ua: (req.headers.get("user-agent") || "").slice(0, 200), fail_count: 0 }, { onConflict: "endpoint" });
+  return json({ ok: true });
+}
+async function pushUnsubscribe(u: any, b: any) { if (b.endpoint) await db.from("push_subs").delete().eq("endpoint", b.endpoint).eq("user_id", u.id); return json({ ok: true }); }
+async function pushSend(req: Request, b: any) {
+  if (req.headers.get("x-cron-secret") !== Deno.env.get("CRON_SECRET")) return fail("forbidden", 403);
+  const title = b.title || "라밥"; const body = b.body || "14시부터 5시까지 제휴 식당에서 3,000원 할인이에요"; const url = b.url || "https://ysrheee.github.io/rabap/";
+  const { data: subs } = await db.from("push_subs").select("id,endpoint,p256dh,auth,fail_count,user_id");
+  let ok = 0, failed = 0;
+  for (const s of subs ?? []) {
+    try { await webpush.sendNotification({ endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } }, JSON.stringify({ title, body, url }), { TTL: 3600 });
+      ok++; await db.from("push_subs").update({ last_ok_at: new Date().toISOString(), fail_count: 0 }).eq("id", s.id);
+    } catch (e: any) { failed++; const code = e?.statusCode;
+      if (code === 404 || code === 410) await db.from("push_subs").delete().eq("id", s.id);
+      else await db.from("push_subs").update({ fail_count: (s.fail_count ?? 0) + 1 }).eq("id", s.id); }
+  }
+  await db.from("events").insert({ event: "push_sent", code: `${ok}/${(subs ?? []).length}` });
+  return json({ ok: true, sent: ok, failed, total: (subs ?? []).length });
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
   if (req.method !== "POST") return fail("POST only", 405);
   let b: any; try { b = await req.json(); } catch { return fail("bad json"); }
 
   if (b.action === "billing_run") return billingRun(req);
+  if (b.action === "push_send") return pushSend(req, b);
   if (b.action === "track") { // 인증 없는 이벤트 기록 (초대 링크 열림 등)
     const ev = String(b.event || "").slice(0, 40); if (!ev) return fail("event 필요");
     await db.from("events").insert({ event: ev, code: b.code ? String(b.code).slice(0, 20).toUpperCase() : null, visitor: b.visitor ? String(b.visitor).slice(0, 64) : null, ua: (req.headers.get("user-agent") || "").slice(0, 200) });
@@ -337,6 +364,8 @@ Deno.serve(async (req) => {
     case "redeem_at": return redeemAt(u, b);
     case "history": return history(u);
     case "undo": return undo(u);
+    case "push_subscribe": return pushSubscribe(u, b, req);
+    case "push_unsubscribe": return pushUnsubscribe(u, b);
     case "billing_issue": return billingIssue(u, b);
     case "billing_remove": return billingRemove(u);
     case "cancel": return cancelMembership(u);
